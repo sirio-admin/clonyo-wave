@@ -1,0 +1,22 @@
+# https://taskfile.dev
+
+version: "3"
+
+includes:
+  prod:
+    taskfile: ./Taskfile.base.yml
+    vars:
+      SLS_STAGE: prod
+      
+      WA_MEDIA_BUCKET_NAME: sidea-ai-clone-prod-wa-media-s3
+      ROUTER_WA_MESSAGE_PROCESSOR_SFN_ARN: arn:aws:states:eu-west-1:533267110337:stateMachine:sidea-ai-clone-prod-wa-message-processor-sfn
+      ROUTER_CONFIG_TABLE: sidea-ai-clone-prod-config-table
+      ROUTER_WA_SQS_QUEUE_ARN: arn:aws:sqs:eu-west-1:533267110337:sidea-ai-clone-prod-wa-queue
+      WA_MESSAGES_TABLE: sidea-ai-clone-prod-messages-table
+
+      # AI_CLONE_WA_RESPONSE_STATE_MACHINE_ARN: arn:aws:states:eu-west-1:533267110337:stateMachine:sidea-ai-clone-demo-prod-wa-response-sfn
+      # AI_CLONE_WA_MEDIA_BUCKET_NAME: sidea-ai-clone-demo-prod-wa-media
+      # AI_CLONE_WA_SQS_QUEUE_ARN: arn:aws:sqs:eu-west-1:533267110337:sidea-ai-clone-demo-prod-wa-sqs
+      # BEDROCK_KB_ID: WLSH0SUKNB
+      # ELEVENLABS_API_KEY: sk_e76aa3da4e11958a5784b2fdaf35086791c3433e012d5a98
+      # ELEVENLABS_VOICE_ID: DnVPmMgiF6PlcqXstPBp

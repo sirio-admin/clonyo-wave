@@ -1,0 +1,36 @@
+# Lambda Code Packages
+*.zip
+lambdas/*-code.zip
+
+# Dependencies
+node_modules/
+vendor/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Laravel
+storage/*.key
+.phpunit.result.cache
+bootstrap/cache/*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
