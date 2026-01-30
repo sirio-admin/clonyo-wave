@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  localstack:
+    container_name: sidea_localstack
+    image: localstack/localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=stepfunctions,dynamodb,lambda,s3,sts,iam,cloudwatch
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=eu-west-1
+      - LAMBDA_EXECUTOR=docker
+    volumes:
+      - "./init-scripts:/etc/localstack/init/ready.d"
+      - "./lambdas:/opt/lambdas" # Mount source code for mounting in lambdas
+      - "/var/run/docker.sock:/var/run/docker.sock"

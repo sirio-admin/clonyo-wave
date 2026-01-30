@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Function Flowchart</title>
+</head>
+
+<body>
+    <h1>Step Function Flowchart</h1>
+    <div class="mermaid">
+        flowchart TD
+        Start((Start)) --> ExtractVars["ExtractVariables"]
+        ExtractVars --> StoreMeta["Store WA message meta<br>(DynamoDB)"]
+        StoreMeta --> CheckInput{"Input Type?"}
+
+        CheckInput -- Audio --> Transcribe["StartTranscriptionJob<br>(AWS Transcribe)"]
+        Transcribe --> Wait["Wait for job"]
+        Wait --> GetJob["GetTranscriptionJob"]
+        GetJob --> JobStatus{"Job Finished?"}
+        JobStatus -- No --> Wait
+        JobStatus -- Yes --> GetTranscript["Get transcript content"]
+        GetTranscript --> Transform
+
+        CheckInput -- Text --> Transform["TransformForResponse"]
+
+        Transform --> StoreMsg["Store WA received message<br>(DynamoDB)"]
+        StoreMsg --> Strategy["Get reply strategy<br>(Lambda: Decide Text/Audio)"]
+        Strategy --> Generate["Build Knowledge based response<br>(Bedrock + Claude)"]
+        Generate --> CheckOutput{"Output Type?"}
+
+        CheckOutput -- Text --> ReplyText["Reply with text<br>(SocialMessaging)"]
+        ReplyText --> StoreSent
+
+        CheckOutput -- Audio --> TTS["Generate audio from text<br>(Lambda: ElevenLabs)"]
+        TTS --> Upload["PostWhatsAppMessageMedia<br>(Upload to Meta)"]
+        Upload --> ReplyAudio["Reply with media<br>(SocialMessaging)"]
+        ReplyAudio --> StoreSent
+
+        StoreSent["Store WA sent message<br>(DynamoDB)"] --> Success((Success))
+
+        classDef aws fill:#FF9900,stroke:#232F3E,color:white;
+        classDef logic fill:#3F8624,stroke:#232F3E,color:white;
+        classDef storage fill:#3B48CC,stroke:#232F3E,color:white;
+
+        class Transcribe,Strategy,Generate,TTS,ReplyText,Upload,ReplyAudio aws;
+        class CheckInput,JobStatus,CheckOutput logic;
+        class StoreMeta,StoreMsg,StoreSent storage;
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+
+</html>

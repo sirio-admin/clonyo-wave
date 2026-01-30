@@ -22,9 +22,16 @@ class GenerateResponseHandler implements Handler
         $with_context = $event['with_context'] ?? true;
         $messages_key = $event['messages_key'] ?? '';
 
+        $context_data = [
+            'topic_name' => $event['topicResult']['topic_name'] ?? null,
+            'historical_context' => $event['historyResult']['history'] ?? [],
+            'kb_docs' => $event['kbResult']['RetrievalResults'] ?? []
+        ];
+
         $response = $this->service
             ->withConfig(ResponseGeneratorData::from($raw_config))
             ->withContext($with_context)
+            ->withAdditionalContext($context_data)
             ->withMessages($this->messages->all($messages_key))
             ->generate($user_input);
 

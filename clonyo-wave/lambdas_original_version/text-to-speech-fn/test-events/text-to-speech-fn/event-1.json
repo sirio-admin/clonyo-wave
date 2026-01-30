@@ -1,0 +1,12 @@
+{
+    "text": "Ah, il fattore 1%! È un concetto che mi sta molto a cuore e di cui parlo spesso. <break time=\"0.8s\"/> \n\nIn realtà, il tema del miglioramento graduale e costante attraverso l'1% è ricorrente in molte mie puntate, ma ricordo di averlo approfondito in modo particolare in un episodio intitolato \"Migliorare se stessi\".\n\nIn quella puntata, condivido un principio che considero fondamentale: la regola dell'1%. <break time=\"0.5s\"/> Spiego come questo approccio possa essere applicato a vari aspetti della vita, dal public speaking alle relazioni personali.\n\nEcco alcuni punti chiave che ho toccato:\n\n1. L'importanza di porsi obiettivi di miglioramento piccoli ma costanti\n2. Come identificare le aree in cui possiamo crescere dell'1% al mese\n3. L'impatto cumulativo di questi piccoli cambiamenti nel lungo periodo\n\nRicorda, il vero cambiamento non avviene attraverso grandi rivoluzioni, ma attraverso piccoli passi costanti. <break time=\"0.5s\"/> Ogni giorno abbiamo l'opportunità di migliorare dell'1%, e nel tempo, questi piccoli progressi possono portare a trasformazioni straordinarie nella nostra vita.",
+    "config": {
+        "api_key": "sk_e76aa3da4e11958a5784b2fdaf35086791c3433e012d5a98",
+        "output_format": "opus_48000_32",
+        "similarity_boost": 0.88,
+        "stability": 0.76,
+        "style": 0.1,
+        "voice_id": "DnVPmMgiF6PlcqXstPBp"
+    },
+    "wa_phone_number_arn": "arn:aws:social-messaging:eu-west-1:533267110337:phone-number-id/b49d8750cd264153a40df4fea2e5b17a"
+}

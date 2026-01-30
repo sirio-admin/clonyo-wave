@@ -1,0 +1,66 @@
+# https://taskfile.dev
+
+version: "3"
+
+env:
+  AI_CLONE_WA_RESPONSE_STATE_MACHINE_ARN:
+    sh: echo {{.AI_CLONE_WA_RESPONSE_STATE_MACHINE_ARN}}
+  AI_CLONE_WA_MEDIA_BUCKET_NAME:
+    sh: echo {{.AI_CLONE_WA_MEDIA_BUCKET_NAME}}
+  AI_CLONE_WA_SQS_QUEUE_ARN:
+    sh: echo {{.AI_CLONE_WA_SQS_QUEUE_ARN}}
+  BEDROCK_KB_ID:
+    sh: echo {{.BEDROCK_KB_ID}}
+  ELEVENLABS_API_KEY:
+    sh: echo {{.ELEVENLABS_API_KEY}}
+  ELEVENLABS_VOICE_ID:
+    sh: echo {{.ELEVENLABS_VOICE_ID}}
+
+tasks:
+  vars-validation:
+    requires:
+      vars:
+        - SLS_STAGE
+        - AI_CLONE_WA_RESPONSE_STATE_MACHINE_ARN
+        - AI_CLONE_WA_MEDIA_BUCKET_NAME
+        - AI_CLONE_WA_SQS_QUEUE_ARN
+        - BEDROCK_KB_ID
+        - ELEVENLABS_API_KEY
+        - ELEVENLABS_VOICE_ID
+    cmd: echo All required variables set
+
+  sls:pre-package:
+    cmds:
+      - php artisan optimize
+      - php artisan config:clear
+      - php artisan route:cache
+
+  sls:deploy:
+    deps: [vars-validation, sls:pre-package]
+    cmd: npx sls deploy --stage {{.SLS_STAGE}}
+
+  sls:package:
+    deps: [vars-validation, sls:pre-package]
+    cmd: npx sls package --stage {{.SLS_STAGE}}
+  
+  sls:remove:
+    deps: [vars-validation]
+    cmd: npx sls remove --stage {{.SLS_STAGE}}
+
+  sls:deploy:fn:
+    deps: [vars-validation, sls:pre-package]
+    requires:
+      vars: [CLI_ARGS]
+    cmd: npx sls deploy --stage {{.SLS_STAGE}} -f {{.CLI_ARGS}}
+
+  sls:artisan:
+    deps: [vars-validation]
+    requires:
+      vars: [CLI_ARGS]
+    cmd: npx sls bref:cli --args="{{.CLI_ARGS}}" --stage {{.SLS_STAGE}}
+
+  sls:logs:fn:
+    deps: [vars-validation]
+    requires:
+      vars: [CLI_ARGS]
+    cmd: npx sls logs --stage {{.SLS_STAGE}} -f "{{.CLI_ARGS}}"

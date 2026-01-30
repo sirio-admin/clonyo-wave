@@ -11,6 +11,8 @@ interface ResponseGenerator
 
     public function withContext(bool $with_context = true): static;
 
+    public function withAdditionalContext(array $context): static;
+
     public function withMessages(Collection $messages): static;
 
     public function generate(string $user_input): string;

@@ -21,6 +21,8 @@ class BedrockService implements ResponseGenerator
      * @var Collection<ConversationMessageData>
      */
     protected Collection $messages;
+    
+    protected array $additional_context = [];
 
     protected ResponseGeneratorData $config;
 
@@ -35,6 +37,12 @@ class BedrockService implements ResponseGenerator
     {
         $this->config = $config;
 
+        return $this;
+    }
+
+    public function withAdditionalContext(array $context): static
+    {
+        $this->additional_context = $context;
         return $this;
     }
 
@@ -54,17 +62,35 @@ class BedrockService implements ResponseGenerator
 
     protected function getUserContent(string $user_input): string
     {
+        $context_str = "";
+
+        // KB Docs (Static RAG)
+        if (!empty($this->additional_context['kb_docs'])) {
+            $docs = is_array($this->additional_context['kb_docs']) ? json_encode($this->additional_context['kb_docs']) : $this->additional_context['kb_docs'];
+            $context_str .= "RELEVANT DOCUMENTATION:\n$docs\n\n";
+        }
+
+        // Topic & History
+        if (!empty($this->additional_context['topic_name'])) {
+            $context_str .= "CURRENT TOPIC: " . $this->additional_context['topic_name'] . "\n";
+        }
+        
+        if (!empty($this->additional_context['historical_context'])) {
+             $history = is_array($this->additional_context['historical_context']) ? json_encode($this->additional_context['historical_context']) : $this->additional_context['historical_context'];
+             $context_str .= "RELEVANT PAST CONVERSATIONS:\n$history\n\n";
+        }
+
         if ($this->with_context) {
             $context_contents = $this->context_retriver->withConfig($this->config)->retrive($user_input);
             $context = Arr::join($context_contents, "\n\n");
-            $context .= <<<CONTEXT
-INIZIO Contesto
+            $context_str .= <<<CONTEXT
+INIZIO Contesto (Legacy)
 $context
 FINE Contesto
 CONTEXT;
         }
 
-        return ($context ?? '')."\n".<<<CONTENT
+        return ($context_str ? "CONTEXT:\n$context_str\n\n" : '') . <<<CONTENT
 Domanda:
 $user_input
 CONTENT;

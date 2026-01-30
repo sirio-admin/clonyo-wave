@@ -1,0 +1,20 @@
+{
+    "Records": [
+        {
+            "messageId": "14f68ef3-833f-4626-ba0d-f45565c7f3de",
+            "receiptHandle": "AQEBD396cwZ/LQAqY8SM3zuO/kIc/4SmOPVrm05SIxvA4lqKnzR3EqyywHwZnA/WqP67bu3fy7ls0QDb8QuqQRA5TFjP+R3nNJrxlDXzYrXZolL0SGe2h53Q9MOzxFfqYYqsL11ExBCCsxDTuE1sX1POjQyBPhIjA2x73v6OnR+QspvOeK7sTAspbBrhPFjFlkALb48D06aASDQCeJ9S+qoCE2LGN3vhBNXkV5uPABcLRROlQeN86FOud/YFUMRcf2EQefcL9JnjfeI+Fv64xSlockvFM5EY3gh2jY2zarT9uGRbk/isXNqLq2w21oEKNuxKWymzglMLWgQuv6aM1W4kefhWMwwFDoa/hYJmAlaJoCcK9ot9zDz7ifx0PwvohdZBhht+/5ksxPzaFMwRyVqw4Q==",
+            "body": "{\n\"Type\" : \"Notification\",\n\"MessageId\" : \"89de7728-8589-5c62-800a-179f016e4ad5\",\n\"TopicArn\" : \"arn:aws:sns:eu-west-1:533267110337:sidea-ai-clone-demo-prod-wa-topic\",\n\"Message\" : \"{\\\"context\\\":{\\\"MetaWabaIds\\\":[{\\\"wabaId\\\":\\\"1393727385109399\\\",\\\"arn\\\":\\\"arn:aws:social-messaging:eu-west-1:533267110337:waba\/a9a6973db0a54c8285f8d4e76df62869\\\"}],\\\"MetaPhoneNumberIds\\\":[{\\\"metaPhoneNumberId\\\":\\\"642999532234769\\\",\\\"arn\\\":\\\"arn:aws:social-messaging:eu-west-1:533267110337:phone-number-id\/b49d8750cd264153a40df4fea2e5b17a\\\"}]},\\\"whatsAppWebhookEntry\\\":\\\"{\\\\\\\"id\\\\\\\":\\\\\\\"1393727385109399\\\\\\\",\\\\\\\"changes\\\\\\\":[{\\\\\\\"value\\\\\\\":{\\\\\\\"messaging_product\\\\\\\":\\\\\\\"whatsapp\\\\\\\",\\\\\\\"metadata\\\\\\\":{\\\\\\\"display_phone_number\\\\\\\":\\\\\\\"15557761846\\\\\\\",\\\\\\\"phone_number_id\\\\\\\":\\\\\\\"642999532234769\\\\\\\"},\\\\\\\"contacts\\\\\\\":[{\\\\\\\"profile\\\\\\\":{\\\\\\\"name\\\\\\\":\\\\\\\"Francesco\\uD83D\\uDCBB\\\\\\\"},\\\\\\\"wa_id\\\\\\\":\\\\\\\"393462454282\\\\\\\"}],\\\\\\\"messages\\\\\\\":[{\\\\\\\"from\\\\\\\":\\\\\\\"393462454282\\\\\\\",\\\\\\\"id\\\\\\\":\\\\\\\"wamid.HBgMMzkzNDYyNDU0MjgyFQIAEhgUM0E1M0I3NEJCNzZEMDBFQTExNTYA\\\\\\\",\\\\\\\"timestamp\\\\\\\":\\\\\\\"1748861604\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"audio\\\\\\\",\\\\\\\"audio\\\\\\\":{\\\\\\\"mime_type\\\\\\\":\\\\\\\"audio\/ogg; codecs=opus\\\\\\\",\\\\\\\"sha256\\\\\\\":\\\\\\\"NWINN47N05xOZIuClw\/MzbBqHIJzFTBe4YSsiJr7zIo=\\\\\\\",\\\\\\\"id\\\\\\\":\\\\\\\"1738433820214014\\\\\\\",\\\\\\\"voice\\\\\\\":true}}]},\\\\\\\"field\\\\\\\":\\\\\\\"messages\\\\\\\"}]}\\\",\\\"aws_account_id\\\":\\\"533267110337\\\",\\\"message_timestamp\\\":\\\"2025-06-02T10:53:27.654740947Z\\\"}\",\n\"Timestamp\" : \"2025-06-02T10:53:27.675Z\",\n\"SignatureVersion\" : \"1\",\n\"Signature\" : \"au++OexKrwkoA9MF5zTT+KRz+Yn7EQj9uNv2JZpT46n18yZLUrog9BFwVDIe262nJ\/F59qZqSPqD1iaJpXdqLbGp7Z7It6w910WkYRDgnJbqtR1Z4EB1OglKYRl0GOfYqN5IhG8lNeQbLLf4Pj1Tcta1CajX1ZkQ0DRCZmV9hFHTC+Th3RJ2y225If3LFLtVS5NVABx3PKWxt0GRgEvtgU1QptHtG2wtGDCg+8WniwtruMhiuxeHUzGH1xgXyz5h7B7nt6WeIFBbLc7vSLLPabT\/SMRuI7bown5AIxG6XNx9Bd\/IbrBng44y+F2PptQRguWWZS93+C1v5z5rjL7Tzg==\",\n\"SigningCertURL\" : \"https:\/\/sns.eu-west-1.amazonaws.com\/SimpleNotificationService-9c6465fa7f48f5cacd23014631ec1136.pem\",\n\"UnsubscribeURL\" : \"https:\/\/sns.eu-west-1.amazonaws.com\/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:eu-west-1:533267110337:sidea-ai-clone-demo-prod-wa-topic:ba655626-45bd-4dc2-a48b-f7b68b32cfcc\"\n}",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1748013933989",
+                "SenderId": "AIDAISMY7JYY5F7RTT6AO",
+                "ApproximateFirstReceiveTimestamp": "1748013934000"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "32a19cc9136f281e7c83ee7dbfac0fac",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:eu-west-1:533267110337:ai-clone-sns-2-sf-queue",
+            "awsRegion": "eu-west-1"
+        }
+    ]
+}

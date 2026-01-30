@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Function Flowchart v3 (Sequential + Sufficiency Check)</title>
+</head>
+
+<body>
+    <h1>Step Function Flowchart v3 (Sequential + Sufficiency Check)</h1>
+    <p>Nuovi blocchi evidenziati in <span style="color:red; font-weight:bold;">ROSSO</span></p>
+    <div class="mermaid">
+        flowchart TD
+        Start((Start)) --> ExtractVars["ExtractVariables"]
+
+        %% NEW: Session Management
+        ExtractVars -- <span style="color:red">Passa contact_id</span> --> ManageSession["<span style='color:red'>Manage
+            Session</span><br>Check 30min timeout<br>Return session_id"]
+        ManageSession --> StoreMeta["Store WA message meta"]
+
+        StoreMeta --> CheckInput{"Input Type?"}
+
+        %% Input Audio Path
+        CheckInput -- Audio --> Transcribe["StartTranscriptionJob"]
+        Transcribe --> Wait["Wait for job"]
+        Wait --> GetJob["GetTranscriptionJob"]
+        GetJob --> JobStatus{"Job Finished?"}
+        JobStatus -- No --> Wait
+        JobStatus -- Yes --> GetTranscript["Get transcript content"]
+        GetTranscript --> Transform
+
+        %% Input Text Path
+        CheckInput -- Text --> Transform["TransformForResponse"]
+
+        %% Core Logic
+        Transform --> StoreMsg["Store WA received message<br>(Include session_id)"]
+
+        %% NEW: Sequential Topic & Analysis Flow
+        StoreMsg --> AnalyzeTopic["<span style='color:red'>Analyze Topic</span><br>(Lambda)<br>Extract topic &
+        sentiment"]
+
+        AnalyzeTopic -- <span style="color:red">Topic ID</span> --> GetMemory["<span style='color:red'>Get Session
+            History (Topic Filtered)</span><br>(DynamoDB Query)<br>Retrieve past summaries with Topic ID"]
+
+        GetMemory --> CheckSufficiency{"<span style='color:red'>Is Context Sufficient?</span><br>(LLM Check)"}
+
+        %% Context Check Logic
+        CheckSufficiency -- <span style="color:red">Yes (Enough Info)</span> --> Strategy
+        CheckSufficiency -- <span style="color:red">No (Need Docs)</span> --> QueryKB["<span style='color:red'>Query
+            Static Knowledge Base</span><br>(Bedrock Knowledge Base)<br>Retrieve S3 Docs"]
+        QueryKB --> Strategy["Get reply strategy<br>(Lambda)"]
+
+        Strategy --> Generate["Build based response<br>(Bedrock + Claude)<br><span style='color:red'>Uses Topic + Memory
+            + (KB Docs)</span>"]
+        Generate --> CheckOutput{"Output Type?"}
+
+        %% Output Text Path
+        CheckOutput -- Text --> ReplyText["Reply with text"]
+        ReplyText --> StoreSent
+
+        %% Output Audio Path
+        CheckOutput -- Audio --> TTS["Generate audio"]
+        TTS --> Upload["Post Media"]
+        Upload --> ReplyAudio["Reply with media"]
+        ReplyAudio --> StoreSent
+
+        %% Finalization
+        StoreSent["Store WA sent message"] --> UpdateSession["<span style='color:red'>Update Session
+            Meta</span><br>Update last_active_at"]
+        UpdateSession --> Success((Success))
+
+        classDef new fill:#FFCCCC,stroke:#FF0000,stroke-width:2px;
+        classDef existing fill:#E1E1E1,stroke:#333;
+
+        class ManageSession,AnalyzeTopic,GetMemory,CheckSufficiency,QueryKB,UpdateSession new;
+        class ExtractVars,StoreMeta,StoreMsg,Strategy,Generate,StoreSent existing;
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,77 @@
+{
+    "Comment": "Test V3 new blocks only",
+    "QueryLanguage": "JSONata",
+    "StartAt": "ManageSession",
+    "States": {
+        "ManageSession": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-west-1:000000000000:function:session-manager-fn",
+                "Payload": {
+                    "wa_contact_id": "{% $states.input.wa_contact_id %}"
+                }
+            },
+            "Next": "AnalyzeTopic",
+            "Assign": {
+                "session_id": "{% $states.result.Payload.session_id %}",
+                "topic_id": "{% $states.result.Payload.topic_id %}"
+            }
+        },
+        "AnalyzeTopic": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-west-1:000000000000:function:topic-analyzer-fn",
+                "Payload": {
+                    "text": "{% $states.input.user_message %}",
+                    "current_topic_id": "{% $topic_id %}"
+                }
+            },
+            "Next": "CheckSufficiency",
+            "Assign": {
+                "topic_id": "{% $states.result.Payload.topic_id %}",
+                "topic_name": "{% $states.result.Payload.topic_name %}"
+            }
+        },
+        "CheckSufficiency": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-west-1:000000000000:function:context-evaluator-fn",
+                "Payload": {
+                    "userInput": "{% $states.input.user_message %}",
+                    "history": []
+                }
+            },
+            "Next": "IsSufficient",
+            "Assign": {
+                "is_sufficient": "{% $states.result.Payload.sufficient %}"
+            }
+        },
+        "IsSufficient": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Condition": "{% $is_sufficient = true %}",
+                    "Next": "SkipKB"
+                }
+            ],
+            "Default": "NeedKB"
+        },
+        "SkipKB": {
+            "Type": "Pass",
+            "Result": {
+                "message": "Context sufficient, skipping KB"
+            },
+            "End": true
+        },
+        "NeedKB": {
+            "Type": "Pass",
+            "Result": {
+                "message": "Need to query KB for more context"
+            },
+            "End": true
+        }
+    }
+}
