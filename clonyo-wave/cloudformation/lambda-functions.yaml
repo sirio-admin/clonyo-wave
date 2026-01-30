@@ -58,7 +58,6 @@ Resources:
       Environment:
         Variables:
           APP_ENV: test
-          AWS_REGION: eu-central-1
           WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
           WA_MESSAGES_TABLE: !Ref MessagesTableName
           WA_SESSIONS_TABLE: !Ref SessionsTableName
@@ -92,7 +91,6 @@ Resources:
       Environment:
         Variables:
           APP_ENV: test
-          AWS_REGION: eu-central-1
           WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
           WA_MESSAGES_TABLE: !Ref MessagesTableName
           WA_SESSIONS_TABLE: !Ref SessionsTableName
@@ -126,7 +124,6 @@ Resources:
       Environment:
         Variables:
           APP_ENV: test
-          AWS_REGION: eu-central-1
           WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
           WA_MESSAGES_TABLE: !Ref MessagesTableName
           WA_SESSIONS_TABLE: !Ref SessionsTableName
@@ -160,7 +157,6 @@ Resources:
       Environment:
         Variables:
           APP_ENV: test
-          AWS_REGION: eu-central-1
           WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
           WA_MESSAGES_TABLE: !Ref MessagesTableName
           WA_SESSIONS_TABLE: !Ref SessionsTableName
@@ -194,7 +190,6 @@ Resources:
       Environment:
         Variables:
           APP_ENV: test
-          AWS_REGION: eu-central-1
           WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
           WA_MESSAGES_TABLE: !Ref MessagesTableName
           WA_SESSIONS_TABLE: !Ref SessionsTableName
@@ -228,7 +223,6 @@ Resources:
       Environment:
         Variables:
           APP_ENV: test
-          AWS_REGION: eu-central-1
           WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
           WA_MESSAGES_TABLE: !Ref MessagesTableName
           WA_SESSIONS_TABLE: !Ref SessionsTableName
@@ -262,7 +256,6 @@ Resources:
       Environment:
         Variables:
           APP_ENV: test
-          AWS_REGION: eu-central-1
           WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
           WA_MESSAGES_TABLE: !Ref MessagesTableName
           WA_SESSIONS_TABLE: !Ref SessionsTableName
