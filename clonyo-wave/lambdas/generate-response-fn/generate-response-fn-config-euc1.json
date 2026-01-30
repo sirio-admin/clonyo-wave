@@ -1,0 +1,23 @@
+{
+  "FunctionName": "sidea-ai-clone-test-euc1-generate-response-fn",
+  "Runtime": "provided.al2",
+  "Handler": "App\\Handlers\\GenerateResponseHandler",
+  "Timeout": 30,
+  "MemorySize": 1024,
+  "Role": "arn:aws:iam::533267110337:role/sidea-ai-clone-test-euc1-lambda-execution-role",
+  "Environment": {
+    "Variables": {
+      "APP_ENV": "test",
+      "AWS_REGION": "eu-central-1",
+      "WA_MEDIA_BUCKET_NAME": "sidea-ai-clone-test-euc1-wa-media-s3",
+      "WA_MESSAGES_TABLE": "sidea-ai-clone-test-euc1-messages-table",
+      "WA_SESSIONS_TABLE": "sidea-ai-clone-test-euc1-sessions-table",
+      "ROUTER_CONFIG_TABLE": "sidea-ai-clone-test-euc1-config-table",
+      "BEDROCK_KB_ID": "YT2DL1CBQI",
+      "LOG_LEVEL": "debug"
+    }
+  },
+  "Layers": [
+    "arn:aws:lambda:eu-central-1:534081306603:layer:php-84:22"
+  ]
+}

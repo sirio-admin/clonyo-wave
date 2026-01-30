@@ -1,0 +1,451 @@
+{
+    "Comment": "Clone AI state machine",
+    "StartAt": "ExtractVariables",
+    "States": {
+        "ExtractVariables": {
+            "Type": "Pass",
+            "Next": "ManageSession",
+            "Assign": {
+                "wa_contact_id": "{% $states.input.wa_contact.wa_id %}",
+                "message_ts": "{% $states.input.message_ts %}",
+                "reply_to_wa_id": "{% $states.input.reply_to_wa_id %}",
+                "wa_phone_number_arn": "{% $states.input.config.wa_phone_number_arn %}",
+                "config": "{% $states.input.config %}"
+            }
+        },
+        "Store WA message meta": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::dynamodb:putItem",
+            "Arguments": {
+                "TableName": "sidea-ai-clone-test-euc1-messages-table",
+                "Item": {
+                    "pk": {
+                        "S": "{% 'S#' & $wa_phone_number_arn & '#C#' & $wa_contact_id %}"
+                    },
+                    "sk": {
+                        "S": "META"
+                    },
+                    "wa_phone_number_arn": {
+                        "S": "{% $wa_phone_number_arn %}"
+                    },
+                    "wa_contact_id": {
+                        "S": "{% $wa_contact_id %}"
+                    },
+                    "wa_contact_profile_name": {
+                        "S": "{% $states.input.wa_contact.profile.name %}"
+                    },
+                    "last_message_at_ts": {
+                        "N": "{% $string($states.input.message_ts) %}"
+                    }
+                }
+            },
+            "Output": "{% $states.input %}",
+            "Next": "Evaluate message type"
+        },
+        "Evaluate message type": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Next": "TransformForResponse",
+                    "Condition": "{% $exists($states.input.text) %}",
+                    "Comment": "text"
+                },
+                {
+                    "Next": "StartTranscriptionJob",
+                    "Condition": "{% $exists($states.input.audio) %}",
+                    "Comment": "audio"
+                }
+            ],
+            "Default": "Fail"
+        },
+        "TransformForResponse": {
+            "Type": "Pass",
+            "Next": "Store WA received message",
+            "Output": {
+                "userInput": "{% $exists($states.input.transcript) ? $states.input.transcript : $states.input.text.body %}",
+                "original_input_type": "{% $exists($states.input.transcript) ? 'audio' : 'text' %}",
+                "config": "{% $config.response_generator %}",
+                "messages_key": "{% 'S#' & $wa_phone_number_arn & '#C#' & $wa_contact_id %}"
+            }
+        },
+        "Store WA received message": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::dynamodb:putItem",
+            "Arguments": {
+                "TableName": "sidea-ai-clone-test-euc1-messages-table",
+                "Item": {
+                    "pk": {
+                        "S": "{% 'S#' & $wa_phone_number_arn & '#C#' & $wa_contact_id %}"
+                    },
+                    "sk": {
+                        "S": "{% 'M#' & $message_ts %}"
+                    },
+                    "role": "user",
+                    "type": "{% $states.input.original_input_type %}",
+                    "content": "{% $states.input.userInput %}",
+                    "session_id": {
+                        "S": "{% $session_id %}"
+                    },
+                    "topic_id": {
+                        "S": "{% $current_topic_id %}"
+                    }
+                }
+            },
+            "Output": "{% $states.input %}",
+            "Next": "AnalyzeTopic"
+        },
+        "Get reply strategy": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Output": "{% $states.input %}",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-central-1:533267110337:function:sidea-ai-clone-test-euc1-reply-strategy-fn",
+                "Payload": "{% $states.input %}"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "IntervalSeconds": 5,
+                    "Comment": "12 total attempts spread across ~88s. Waits: 5.0s, 5.45s, 5.94s, 6.48s, 7.06s, 7.69s, 8.39s, 9.14s, 9.96s, 10.86s, 11.84s",
+                    "MaxAttempts": 11,
+                    "BackoffRate": 1.09,
+                    "MaxDelaySeconds": 1
+                }
+            ],
+            "Next": "Build Knowledge based response",
+            "Assign": {
+                "output_message_type": "{% $states.result.Payload.mode %}",
+                "complexity_factor": "{% $states.result.Payload.complexity_factor %}"
+            }
+        },
+        "Build Knowledge based response": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Output": "{% $states.result.Payload %}",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-central-1:533267110337:function:sidea-ai-clone-test-euc1-generate-response-fn",
+                "Payload": "{% $merge([$states.input,{\"complexity_factor\": $complexity_factor}]) %}"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "IntervalSeconds": 5,
+                    "Comment": "12 total attempts spread across ~88s. Waits: 5.0s, 5.45s, 5.94s, 6.48s, 7.06s, 7.69s, 8.39s, 9.14s, 9.96s, 10.86s, 11.84s",
+                    "MaxAttempts": 11,
+                    "BackoffRate": 1.09,
+                    "MaxDelaySeconds": 1
+                }
+            ],
+            "Next": "Choose output type",
+            "Assign": {
+                "output_message_content": "{% $states.result.Payload.response %}"
+            }
+        },
+        "Choose output type": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Comment": "Audio",
+                    "Next": "Generate audio from text",
+                    "Condition": "{% $output_message_type = \"audio\" %}"
+                },
+                {
+                    "Next": "Reply to WA User with text",
+                    "Condition": "{% $output_message_type = \"text\" %}",
+                    "Comment": "Text"
+                }
+            ],
+            "Default": "Store WA sent message",
+            "Assign": {
+                "output_message_type": "text"
+            }
+        },
+        "Reply to WA User with text": {
+            "Type": "Task",
+            "Arguments": {
+                "Message": {
+                    "messaging_product": "whatsapp",
+                    "to": "{% $reply_to_wa_id %}",
+                    "type": "text",
+                    "text": {
+                        "body": "{% $output_message_content %}"
+                    }
+                },
+                "MetaApiVersion": "v21.0",
+                "OriginationPhoneNumberId": "{% $wa_phone_number_arn %}"
+            },
+            "Type": "Pass", "Comment": "MOCKED WhatsApp send",
+            "Next": "Store WA sent message"
+        },
+        "Generate audio from text": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Output": "{% $states.result.Payload %}",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-central-1:533267110337:function:sidea-ai-clone-test-euc1-text-to-speech-fn",
+                "Payload": {
+                    "text": "{% $states.input.response %}",
+                    "config": "{% $config.text_to_speech %}",
+                    "wa_phone_number_arn": "{% $wa_phone_number_arn %}"
+                }
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
+                }
+            ],
+            "Next": "PostWhatsAppMessageMedia"
+        },
+        "PostWhatsAppMessageMedia": {
+            "Type": "Task",
+            "Arguments": {
+                "OriginationPhoneNumberId": "{% $wa_phone_number_arn %}",
+                "SourceS3File": {
+                    "BucketName": "{% $states.input.bucket_name %}",
+                    "Key": "{% $states.input.key %}"
+                }
+            },
+            "Type": "Pass", "Comment": "MOCKED WhatsApp media post", "Result": {"MediaId": "mock-media-123"},
+            "Next": "Reply to WA User with media"
+        },
+        "Reply to WA User with media": {
+            "Type": "Task",
+            "Arguments": {
+                "Message": {
+                    "messaging_product": "whatsapp",
+                    "to": "{% $reply_to_wa_id %}",
+                    "type": "audio",
+                    "audio": {
+                        "id": "{% $states.input.MediaId %}"
+                    }
+                },
+                "MetaApiVersion": "v21.0",
+                "OriginationPhoneNumberId": "{% $wa_phone_number_arn %}"
+            },
+            "Type": "Pass", "Comment": "MOCKED WhatsApp send",
+            "Next": "Store WA sent message"
+        },
+        "Store WA sent message": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::dynamodb:putItem",
+            "Arguments": {
+                "TableName": "sidea-ai-clone-test-euc1-messages-table",
+                "Item": {
+                    "pk": {
+                        "S": "{% 'S#' & $wa_phone_number_arn & '#C#' & $wa_contact_id %}"
+                    },
+                    "sk": {
+                        "S": "{% 'M#' & $string($round($millis() / 1000)) %}"
+                    },
+                    "role": "assistant",
+                    "type": "{% $output_message_type %}",
+                    "content": "{% $output_message_content %}",
+                    "session_id": {
+                        "S": "{% $session_id %}"
+                    },
+                    "topic_id": {
+                        "S": "{% $topic_id %}"
+                    }
+                }
+            },
+            "Output": "{% $states.input %}",
+            "Next": "Update Session Meta"
+        },
+        "Success": {
+            "Type": "Succeed"
+        },
+        "StartTranscriptionJob": {
+            "Type": "Task",
+            "Arguments": {
+                "Media": {
+                    "MediaFileUri": "{% $states.input.audio.s3_uri %}"
+                },
+                "LanguageCode": "it-IT",
+                "TranscriptionJobName": "{% \"ai-clone-demo_\" & $uuid() %}"
+            },
+            "Resource": "arn:aws:states:::aws-sdk:transcribe:startTranscriptionJob",
+            "Next": "Wait for job to complete",
+            "Assign": {
+                "transcriptionJobName": "{% $states.result.TranscriptionJob.TranscriptionJobName%}"
+            }
+        },
+        "Wait for job to complete": {
+            "Type": "Wait",
+            "Seconds": 5,
+            "Next": "GetTranscriptionJob"
+        },
+        "GetTranscriptionJob": {
+            "Type": "Task",
+            "Arguments": {
+                "TranscriptionJobName": "{% $transcriptionJobName %}"
+            },
+            "Resource": "arn:aws:states:::aws-sdk:transcribe:getTranscriptionJob",
+            "Next": "Job finished?"
+        },
+        "Job finished?": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Next": "Get transcript file content",
+                    "Comment": "COMPLETED",
+                    "Condition": "{% $states.input.TranscriptionJob.TranscriptionJobStatus = \"COMPLETED\" %}"
+                },
+                {
+                    "Next": "Fail",
+                    "Condition": "{% $states.input.TranscriptionJob.TranscriptionJobStatus = \"FAILED\" %}",
+                    "Comment": "FAILED"
+                }
+            ],
+            "Default": "Wait for job to complete"
+        },
+        "Get transcript file content": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-central-1:533267110337:function:sidea-ai-clone-test-euc1-get-file-contents-fn",
+                "Payload": {
+                    "file_uri": "{% $states.input.TranscriptionJob.Transcript.TranscriptFileUri %}"
+                }
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
+                }
+            ],
+            "Next": "TransformForResponse",
+            "Output": {
+                "transcript": "{% $parse($states.result.Payload.content).results.transcripts[0].transcript %}"
+            }
+        },
+        "Fail": {
+            "Type": "Fail"
+        },
+        "ManageSession": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.sessionResult",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-central-1:533267110337:function:sidea-ai-clone-test-euc1-session-manager-fn",
+                "Payload": {
+                    "wa_contact_id": "{% $wa_contact_id %}"
+                }
+            },
+            "Next": "Store WA message meta",
+            "Assign": {
+                "session_id": "{% $states.result.Payload.session_id %}",
+                "current_topic_id": "{% $states.result.Payload.topic_id %}"
+            }
+        },
+        "AnalyzeTopic": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.topicResult",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-central-1:533267110337:function:sidea-ai-clone-test-euc1-topic-analyzer-fn",
+                "Payload": {
+                    "text": "{% $userInput %}",
+                    "current_topic_id": "{% $current_topic_id %}"
+                }
+            },
+            "Next": "Get Session History",
+            "Assign": {
+                "topic_id": "{% $states.result.Payload.topic_id %}",
+                "topic_keywords": "{% $states.result.Payload.keywords %}"
+            }
+        },
+        "Get Session History": {
+            "Type": "Pass",
+            "Next": "Check Sufficiency",
+            "Result": {
+                "history": []
+            },
+            "ResultPath": "$.historyResult",
+            "Assign": {
+                "historical_context": "{% $states.result.history %}"
+            }
+        },
+        "Check Sufficiency": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.sufficiencyResult",
+            "Arguments": {
+                "FunctionName": "arn:aws:lambda:eu-central-1:533267110337:function:sidea-ai-clone-test-euc1-context-evaluator-fn",
+                "Payload": {
+                    "userInput": "{% $userInput %}",
+                    "history": "{% $historical_context %}"
+                }
+            },
+            "Next": "Is Sufficient?",
+            "Assign": {
+                "is_sufficient": "{% $states.result.Payload.sufficient %}"
+            }
+        },
+        "Is Sufficient?": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Condition": "{% $is_sufficient = true %}",
+                    "Next": "Get reply strategy"
+                }
+            ],
+            "Default": "Query Static KB"
+        },
+        "Query Static KB": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::aws-sdk:bedrockagentruntime:retrieve",
+            "Arguments": {
+                "KnowledgeBaseId": "{% $config.kb_id %}",
+                "RetrievalQuery": {
+                    "Text": "{% $userInput %}"
+                }
+            },
+            "ResultPath": "$.kbResult",
+            "Next": "Get reply strategy",
+            "Assign": {
+                "kb_docs": "{% $states.result.RetrievalResults %}"
+            }
+        },
+        "Update Session Meta": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::dynamodb:updateItem",
+            "Arguments": {
+                "TableName": "sidea-ai-clone-test-euc1-sessions-table",
+                "Key": {
+                    "session_id": {
+                        "S": "{% $session_id %}"
+                    }
+                },
+                "UpdateExpression": "SET last_active_at = :now",
+                "ExpressionAttributeValues": {
+                    ":now": {
+                        "N": "{% $string($round($millis() / 1000)) %}"
+                    }
+                }
+            },
+            "Next": "Success"
+        }
+    },
+    "QueryLanguage": "JSONata"
+}

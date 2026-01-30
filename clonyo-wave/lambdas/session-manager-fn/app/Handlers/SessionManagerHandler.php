@@ -32,7 +32,7 @@ class SessionManagerHandler implements Handler
             throw new \Exception("Missing wa_contact_id");
         }
 
-        $tableName = 'sidea-ai-clone-prod-sessions';
+        $tableName = $_ENV['WA_SESSIONS_TABLE'] ?? 'sidea-ai-clone-test-euc1-sessions-table';
         $now = time();
         $thirtyMinutesMsg = 30 * 60;
 

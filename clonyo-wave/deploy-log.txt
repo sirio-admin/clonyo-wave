@@ -1,0 +1,26 @@
+🚀 Deploying Complete Clonyo Wave Stack to eu-central-1
+Stack name: clonyo-wave-test-euc1
+Environment: test-euc1
+Region: eu-central-1
+
+                           PRE cloudformation/
+                           PRE lambdas/
+2026-01-30 17:26:47      17679 step-function-definition-euc1.json
+📋 Pre-flight checks...
+  ✓ AWS Profile: sirio
+  ✓ Deployment bucket: s3://sidea-ai-clone-cfn-deploy-euc1
+  ✓ Target region: eu-central-1
+
+🚀 Deploying main CloudFormation stack...
+This will create:
+  1. Infrastructure Stack (DynamoDB, S3, IAM)
+  2. Lambda Functions Stack (7 functions)
+  3. Step Function Stack (Message Processor)
+
+
+Waiting for changeset to be created..
+Waiting for stack create/update to complete
+
+Failed to create/update the stack. Run the following command
+to fetch the list of events leading up to the failure
+aws cloudformation describe-stack-events --stack-name clonyo-wave-test-euc1

@@ -1,0 +1,317 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Clonyo Wave Test Infrastructure - DynamoDB, S3, IAM Roles (eu-central-1)'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: test-euc1
+    Description: Environment name
+    AllowedValues:
+      - test-euc1
+
+  BedrockKBId:
+    Type: String
+    Default: YT2DL1CBQI
+    Description: Bedrock Knowledge Base ID for eu-central-1
+
+Resources:
+  # ==============================================
+  # DynamoDB Tables
+  # ==============================================
+
+  MessagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'sidea-ai-clone-${Environment}-messages-table'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'sidea-ai-clone-${Environment}-sessions-table'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+        - AttributeName: wa_contact_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: wa_contact_id_index
+          KeySchema:
+            - AttributeName: wa_contact_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  ConfigTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'sidea-ai-clone-${Environment}-config-table'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: wa_phone_number_arn
+          AttributeType: S
+      KeySchema:
+        - AttributeName: wa_phone_number_arn
+          KeyType: HASH
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  # ==============================================
+  # S3 Bucket
+  # ==============================================
+
+  MediaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'sidea-ai-clone-${Environment}-wa-media-s3'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  # ==============================================
+  # IAM Roles - Lambda Execution Role
+  # ==============================================
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'sidea-ai-clone-${Environment}-lambda-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:UpdateItem
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt MessagesTable.Arn
+                  - !GetAtt SessionsTable.Arn
+                  - !GetAtt ConfigTable.Arn
+                  - !Sub '${MessagesTable.Arn}/index/*'
+                  - !Sub '${SessionsTable.Arn}/index/*'
+
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt MediaBucket.Arn
+                  - !Sub '${MediaBucket.Arn}/*'
+
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: 'arn:aws:bedrock:eu-central-1::foundation-model/*'
+              - Effect: Allow
+                Action:
+                  - bedrock:Retrieve
+                Resource: !Sub 'arn:aws:bedrock:eu-central-1:${AWS::AccountId}:knowledge-base/${BedrockKBId}'
+
+        - PolicyName: TranscribeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - transcribe:StartTranscriptionJob
+                  - transcribe:GetTranscriptionJob
+                Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  # ==============================================
+  # IAM Roles - Step Functions Execution Role
+  # ==============================================
+
+  StepFunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'sidea-ai-clone-${Environment}-stepfunctions-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource:
+                  - !Sub 'arn:aws:lambda:eu-central-1:${AWS::AccountId}:function:sidea-ai-clone-${Environment}-*'
+
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt MessagesTable.Arn
+                  - !GetAtt SessionsTable.Arn
+                  - !GetAtt ConfigTable.Arn
+                  - !Sub '${SessionsTable.Arn}/index/*'
+
+              - Effect: Allow
+                Action:
+                  - transcribe:StartTranscriptionJob
+                  - transcribe:GetTranscriptionJob
+                Resource: '*'
+
+              - Effect: Allow
+                Action:
+                  - bedrock:Retrieve
+                  - bedrock:InvokeModel
+                Resource:
+                  - !Sub 'arn:aws:bedrock:eu-central-1:${AWS::AccountId}:knowledge-base/${BedrockKBId}'
+                  - 'arn:aws:bedrock:eu-central-1::foundation-model/*'
+
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutResourcePolicy
+                  - logs:DescribeResourcePolicies
+                  - logs:DescribeLogGroups
+                Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+# ==============================================
+# Outputs
+# ==============================================
+
+Outputs:
+  MessagesTableName:
+    Description: Name of the Messages DynamoDB table
+    Value: !Ref MessagesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-MessagesTableName'
+
+  MessagesTableArn:
+    Description: ARN of the Messages DynamoDB table
+    Value: !GetAtt MessagesTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-MessagesTableArn'
+
+  SessionsTableName:
+    Description: Name of the Sessions DynamoDB table
+    Value: !Ref SessionsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-SessionsTableName'
+
+  SessionsTableArn:
+    Description: ARN of the Sessions DynamoDB table
+    Value: !GetAtt SessionsTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-SessionsTableArn'
+
+  ConfigTableName:
+    Description: Name of the Config DynamoDB table
+    Value: !Ref ConfigTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ConfigTableName'
+
+  ConfigTableArn:
+    Description: ARN of the Config DynamoDB table
+    Value: !GetAtt ConfigTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ConfigTableArn'
+
+  MediaBucketName:
+    Description: Name of the S3 Media bucket
+    Value: !Ref MediaBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-MediaBucketName'
+
+  MediaBucketArn:
+    Description: ARN of the S3 Media bucket
+    Value: !GetAtt MediaBucket.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-MediaBucketArn'
+
+  LambdaExecutionRoleArn:
+    Description: ARN of the Lambda Execution Role
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaExecutionRoleArn'
+
+  StepFunctionExecutionRoleArn:
+    Description: ARN of the Step Function Execution Role
+    Value: !GetAtt StepFunctionExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-StepFunctionExecutionRoleArn'

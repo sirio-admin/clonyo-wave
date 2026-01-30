@@ -1,0 +1,173 @@
+{
+    "StackEvents": [
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "ce3daab0-fdf8-11f0-b69c-0683d2086cab",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "17cf8255-ff61-4700-a725-6ee5445f1994",
+            "LogicalResourceId": "clonyo-wave-test-euc1",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:29:10.215000+00:00",
+            "ResourceStatus": "ROLLBACK_COMPLETE"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "InfrastructureStack-DELETE_COMPLETE-2026-01-30T16:29:09.884Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "17cf8255-ff61-4700-a725-6ee5445f1994",
+            "LogicalResourceId": "InfrastructureStack",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1-InfrastructureStack-J5QHFIJO0I55/87156b50-fdf8-11f0-aeb0-06b324db540f",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:29:09.884000+00:00",
+            "ResourceStatus": "DELETE_COMPLETE",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/infrastructure.yaml\",\"Parameters\":{\"BedrockKBId\":\"YT2DL1CBQI\",\"Environment\":\"test-euc1\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Infrastructure\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "InfrastructureStack-DELETE_IN_PROGRESS-2026-01-30T16:28:36.093Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "17cf8255-ff61-4700-a725-6ee5445f1994",
+            "LogicalResourceId": "InfrastructureStack",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1-InfrastructureStack-J5QHFIJO0I55/87156b50-fdf8-11f0-aeb0-06b324db540f",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:28:36.093000+00:00",
+            "ResourceStatus": "DELETE_IN_PROGRESS",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/infrastructure.yaml\",\"Parameters\":{\"BedrockKBId\":\"YT2DL1CBQI\",\"Environment\":\"test-euc1\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Infrastructure\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "LambdaStack-DELETE_COMPLETE-2026-01-30T16:28:35.770Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "17cf8255-ff61-4700-a725-6ee5445f1994",
+            "LogicalResourceId": "LambdaStack",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1-LambdaStack-15KRU44D9IBCS/abd27aa0-fdf8-11f0-9a2d-0a803e2eb5f7",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:28:35.770000+00:00",
+            "ResourceStatus": "DELETE_COMPLETE",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/lambda-functions.yaml\",\"Parameters\":{\"MediaBucketName\":\"sidea-ai-clone-test-euc1-wa-media-s3\",\"BedrockKBId\":\"YT2DL1CBQI\",\"LambdaExecutionRoleArn\":\"arn:aws:iam::533267110337:role/sidea-ai-clone-test-euc1-lambda-execution-role\",\"Environment\":\"test-euc1\",\"ConfigTableName\":\"sidea-ai-clone-test-euc1-config-table\",\"MessagesTableName\":\"sidea-ai-clone-test-euc1-messages-table\",\"LambdaCodeBucket\":\"sidea-ai-clone-cfn-deploy-euc1\",\"SessionsTableName\":\"sidea-ai-clone-test-euc1-sessions-table\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Lambda\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "LambdaStack-DELETE_IN_PROGRESS-2026-01-30T16:28:25.152Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "17cf8255-ff61-4700-a725-6ee5445f1994",
+            "LogicalResourceId": "LambdaStack",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1-LambdaStack-15KRU44D9IBCS/abd27aa0-fdf8-11f0-9a2d-0a803e2eb5f7",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:28:25.152000+00:00",
+            "ResourceStatus": "DELETE_IN_PROGRESS",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/lambda-functions.yaml\",\"Parameters\":{\"MediaBucketName\":\"sidea-ai-clone-test-euc1-wa-media-s3\",\"BedrockKBId\":\"YT2DL1CBQI\",\"LambdaExecutionRoleArn\":\"arn:aws:iam::533267110337:role/sidea-ai-clone-test-euc1-lambda-execution-role\",\"Environment\":\"test-euc1\",\"ConfigTableName\":\"sidea-ai-clone-test-euc1-config-table\",\"MessagesTableName\":\"sidea-ai-clone-test-euc1-messages-table\",\"LambdaCodeBucket\":\"sidea-ai-clone-cfn-deploy-euc1\",\"SessionsTableName\":\"sidea-ai-clone-test-euc1-sessions-table\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Lambda\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "b24ef0c0-fdf8-11f0-ac47-0a4efe969cd5",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "17cf8255-ff61-4700-a725-6ee5445f1994",
+            "LogicalResourceId": "clonyo-wave-test-euc1",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:28:23.347000+00:00",
+            "ResourceStatus": "ROLLBACK_IN_PROGRESS",
+            "ResourceStatusReason": "The following resource(s) failed to create: [LambdaStack]. Rollback requested by user."
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "LambdaStack-CREATE_FAILED-2026-01-30T16:28:23.025Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "efe71b77-0d33-485b-82de-c8099b0fffe1",
+            "LogicalResourceId": "LambdaStack",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1-LambdaStack-15KRU44D9IBCS/abd27aa0-fdf8-11f0-9a2d-0a803e2eb5f7",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:28:23.025000+00:00",
+            "ResourceStatus": "CREATE_FAILED",
+            "ResourceStatusReason": "Embedded stack arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1-LambdaStack-15KRU44D9IBCS/abd27aa0-fdf8-11f0-9a2d-0a803e2eb5f7 was not successfully created: The following resource(s) failed to create: [ContextEvaluatorFunction, SessionManagerFunction, GetFileContentsFunction, GenerateResponseFunction, TopicAnalyzerFunction, TextToSpeechFunction, ReplyStrategyFunction]. ",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/lambda-functions.yaml\",\"Parameters\":{\"MediaBucketName\":\"sidea-ai-clone-test-euc1-wa-media-s3\",\"BedrockKBId\":\"YT2DL1CBQI\",\"LambdaExecutionRoleArn\":\"arn:aws:iam::533267110337:role/sidea-ai-clone-test-euc1-lambda-execution-role\",\"Environment\":\"test-euc1\",\"ConfigTableName\":\"sidea-ai-clone-test-euc1-config-table\",\"MessagesTableName\":\"sidea-ai-clone-test-euc1-messages-table\",\"LambdaCodeBucket\":\"sidea-ai-clone-cfn-deploy-euc1\",\"SessionsTableName\":\"sidea-ai-clone-test-euc1-sessions-table\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Lambda\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "LambdaStack-CREATE_IN_PROGRESS-2026-01-30T16:28:12.708Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "efe71b77-0d33-485b-82de-c8099b0fffe1",
+            "LogicalResourceId": "LambdaStack",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1-LambdaStack-15KRU44D9IBCS/abd27aa0-fdf8-11f0-9a2d-0a803e2eb5f7",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:28:12.708000+00:00",
+            "ResourceStatus": "CREATE_IN_PROGRESS",
+            "ResourceStatusReason": "Resource creation Initiated",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/lambda-functions.yaml\",\"Parameters\":{\"MediaBucketName\":\"sidea-ai-clone-test-euc1-wa-media-s3\",\"BedrockKBId\":\"YT2DL1CBQI\",\"LambdaExecutionRoleArn\":\"arn:aws:iam::533267110337:role/sidea-ai-clone-test-euc1-lambda-execution-role\",\"Environment\":\"test-euc1\",\"ConfigTableName\":\"sidea-ai-clone-test-euc1-config-table\",\"MessagesTableName\":\"sidea-ai-clone-test-euc1-messages-table\",\"LambdaCodeBucket\":\"sidea-ai-clone-cfn-deploy-euc1\",\"SessionsTableName\":\"sidea-ai-clone-test-euc1-sessions-table\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Lambda\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "LambdaStack-CREATE_IN_PROGRESS-2026-01-30T16:28:12.194Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "efe71b77-0d33-485b-82de-c8099b0fffe1",
+            "LogicalResourceId": "LambdaStack",
+            "PhysicalResourceId": "",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:28:12.194000+00:00",
+            "ResourceStatus": "CREATE_IN_PROGRESS",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/lambda-functions.yaml\",\"Parameters\":{\"MediaBucketName\":\"sidea-ai-clone-test-euc1-wa-media-s3\",\"BedrockKBId\":\"YT2DL1CBQI\",\"LambdaExecutionRoleArn\":\"arn:aws:iam::533267110337:role/sidea-ai-clone-test-euc1-lambda-execution-role\",\"Environment\":\"test-euc1\",\"ConfigTableName\":\"sidea-ai-clone-test-euc1-config-table\",\"MessagesTableName\":\"sidea-ai-clone-test-euc1-messages-table\",\"LambdaCodeBucket\":\"sidea-ai-clone-cfn-deploy-euc1\",\"SessionsTableName\":\"sidea-ai-clone-test-euc1-sessions-table\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Lambda\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "InfrastructureStack-CREATE_COMPLETE-2026-01-30T16:28:11.765Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "efe71b77-0d33-485b-82de-c8099b0fffe1",
+            "LogicalResourceId": "InfrastructureStack",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1-InfrastructureStack-J5QHFIJO0I55/87156b50-fdf8-11f0-aeb0-06b324db540f",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:28:11.765000+00:00",
+            "ResourceStatus": "CREATE_COMPLETE",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/infrastructure.yaml\",\"Parameters\":{\"BedrockKBId\":\"YT2DL1CBQI\",\"Environment\":\"test-euc1\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Infrastructure\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "InfrastructureStack-CREATE_IN_PROGRESS-2026-01-30T16:27:11.099Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "efe71b77-0d33-485b-82de-c8099b0fffe1",
+            "LogicalResourceId": "InfrastructureStack",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1-InfrastructureStack-J5QHFIJO0I55/87156b50-fdf8-11f0-aeb0-06b324db540f",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:27:11.099000+00:00",
+            "ResourceStatus": "CREATE_IN_PROGRESS",
+            "ResourceStatusReason": "Resource creation Initiated",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/infrastructure.yaml\",\"Parameters\":{\"BedrockKBId\":\"YT2DL1CBQI\",\"Environment\":\"test-euc1\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Infrastructure\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "InfrastructureStack-CREATE_IN_PROGRESS-2026-01-30T16:27:10.543Z",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "efe71b77-0d33-485b-82de-c8099b0fffe1",
+            "LogicalResourceId": "InfrastructureStack",
+            "PhysicalResourceId": "",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:27:10.543000+00:00",
+            "ResourceStatus": "CREATE_IN_PROGRESS",
+            "ResourceProperties": "{\"TemplateURL\":\"https://sidea-ai-clone-cfn-deploy-euc1.s3.eu-central-1.amazonaws.com/cloudformation/infrastructure.yaml\",\"Parameters\":{\"BedrockKBId\":\"YT2DL1CBQI\",\"Environment\":\"test-euc1\"},\"Tags\":[{\"Value\":\"test-euc1\",\"Key\":\"Environment\"},{\"Value\":\"clonyo-wave\",\"Key\":\"Project\"},{\"Value\":\"Infrastructure\",\"Key\":\"Stack\"}]}"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "85b16e80-fdf8-11f0-9a2d-0a803e2eb5f7",
+            "StackName": "clonyo-wave-test-euc1",
+            "OperationId": "efe71b77-0d33-485b-82de-c8099b0fffe1",
+            "LogicalResourceId": "clonyo-wave-test-euc1",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:27:08.498000+00:00",
+            "ResourceStatus": "CREATE_IN_PROGRESS",
+            "ResourceStatusReason": "User Initiated"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "EventId": "825dd6b0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "StackName": "clonyo-wave-test-euc1",
+            "LogicalResourceId": "clonyo-wave-test-euc1",
+            "PhysicalResourceId": "arn:aws:cloudformation:eu-central-1:533267110337:stack/clonyo-wave-test-euc1/825e4be0-fdf8-11f0-b6dc-0663d7a6bbf5",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2026-01-30T16:27:02.997000+00:00",
+            "ResourceStatus": "REVIEW_IN_PROGRESS",
+            "ResourceStatusReason": "User Initiated"
+        }
+    ]
+}

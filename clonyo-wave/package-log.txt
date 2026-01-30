@@ -1,0 +1,43 @@
+Starting Lambda packaging...
+Bucket: sidea-ai-clone-cfn-deploy-euc1
+Region: eu-central-1
+
+Packaging reply-strategy-fn...
+  Composer skipped
+  ZIP created
+  Uploaded to S3
+
+Packaging generate-response-fn...
+  Composer skipped
+  ZIP created
+  Uploaded to S3
+
+Packaging text-to-speech-fn...
+  Composer skipped
+  ZIP created
+  Uploaded to S3
+
+Packaging get-file-contents-fn...
+  Composer skipped
+  ZIP created
+  Uploaded to S3
+
+Packaging session-manager-fn...
+  Composer skipped
+  ZIP created
+  Uploaded to S3
+
+Packaging topic-analyzer-fn...
+  Composer skipped
+  ZIP created
+  Uploaded to S3
+
+Packaging context-evaluator-fn...
+  Composer skipped
+  ZIP created
+  Uploaded to S3
+
+Uploading CloudFormation templates...
+Uploading Step Function definition...
+
+Done! All files uploaded to s3://sidea-ai-clone-cfn-deploy-euc1

@@ -1,0 +1,323 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Clonyo Wave Test Lambda Functions - All 7 Functions (eu-central-1)'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: test-euc1
+    Description: Environment name
+
+  LambdaCodeBucket:
+    Type: String
+    Description: S3 bucket where Lambda ZIP files are stored
+
+  LambdaExecutionRoleArn:
+    Type: String
+    Description: ARN of Lambda Execution Role
+
+  MessagesTableName:
+    Type: String
+    Description: Name of Messages DynamoDB table
+
+  SessionsTableName:
+    Type: String
+    Description: Name of Sessions DynamoDB table
+
+  ConfigTableName:
+    Type: String
+    Description: Name of Config DynamoDB table
+
+  MediaBucketName:
+    Type: String
+    Description: Name of Media S3 bucket
+
+  BedrockKBId:
+    Type: String
+    Default: YT2DL1CBQI
+    Description: Bedrock Knowledge Base ID
+
+Resources:
+  # ==============================================
+  # Lambda Function: Reply Strategy
+  # ==============================================
+
+  ReplyStrategyFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'sidea-ai-clone-${Environment}-reply-strategy-fn'
+      Runtime: provided.al2
+      Handler: App\Handlers\ReplyStrategyHandler
+      Role: !Ref LambdaExecutionRoleArn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: lambdas/reply-strategy-fn.zip
+      Timeout: 30
+      MemorySize: 1024
+      Layers:
+        - arn:aws:lambda:eu-central-1:534081306603:layer:php-84:22
+      Environment:
+        Variables:
+          APP_ENV: test
+          AWS_REGION: eu-central-1
+          WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
+          WA_MESSAGES_TABLE: !Ref MessagesTableName
+          WA_SESSIONS_TABLE: !Ref SessionsTableName
+          ROUTER_CONFIG_TABLE: !Ref ConfigTableName
+          BEDROCK_KB_ID: !Ref BedrockKBId
+          LOG_LEVEL: debug
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  # ==============================================
+  # Lambda Function: Generate Response
+  # ==============================================
+
+  GenerateResponseFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'sidea-ai-clone-${Environment}-generate-response-fn'
+      Runtime: provided.al2
+      Handler: App\Handlers\GenerateResponseHandler
+      Role: !Ref LambdaExecutionRoleArn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: lambdas/generate-response-fn.zip
+      Timeout: 30
+      MemorySize: 1024
+      Layers:
+        - arn:aws:lambda:eu-central-1:534081306603:layer:php-84:22
+      Environment:
+        Variables:
+          APP_ENV: test
+          AWS_REGION: eu-central-1
+          WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
+          WA_MESSAGES_TABLE: !Ref MessagesTableName
+          WA_SESSIONS_TABLE: !Ref SessionsTableName
+          ROUTER_CONFIG_TABLE: !Ref ConfigTableName
+          BEDROCK_KB_ID: !Ref BedrockKBId
+          LOG_LEVEL: debug
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  # ==============================================
+  # Lambda Function: Text to Speech
+  # ==============================================
+
+  TextToSpeechFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'sidea-ai-clone-${Environment}-text-to-speech-fn'
+      Runtime: provided.al2
+      Handler: App\Handlers\TextToSpeechHandler
+      Role: !Ref LambdaExecutionRoleArn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: lambdas/text-to-speech-fn.zip
+      Timeout: 60
+      MemorySize: 1024
+      Layers:
+        - arn:aws:lambda:eu-central-1:534081306603:layer:php-84:22
+      Environment:
+        Variables:
+          APP_ENV: test
+          AWS_REGION: eu-central-1
+          WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
+          WA_MESSAGES_TABLE: !Ref MessagesTableName
+          WA_SESSIONS_TABLE: !Ref SessionsTableName
+          ROUTER_CONFIG_TABLE: !Ref ConfigTableName
+          BEDROCK_KB_ID: !Ref BedrockKBId
+          LOG_LEVEL: debug
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  # ==============================================
+  # Lambda Function: Get File Contents
+  # ==============================================
+
+  GetFileContentsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'sidea-ai-clone-${Environment}-get-file-contents-fn'
+      Runtime: provided.al2
+      Handler: App\Handlers\GetFileContentsHandler
+      Role: !Ref LambdaExecutionRoleArn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: lambdas/get-file-contents-fn.zip
+      Timeout: 10
+      MemorySize: 1024
+      Layers:
+        - arn:aws:lambda:eu-central-1:534081306603:layer:php-84:22
+      Environment:
+        Variables:
+          APP_ENV: test
+          AWS_REGION: eu-central-1
+          WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
+          WA_MESSAGES_TABLE: !Ref MessagesTableName
+          WA_SESSIONS_TABLE: !Ref SessionsTableName
+          ROUTER_CONFIG_TABLE: !Ref ConfigTableName
+          BEDROCK_KB_ID: !Ref BedrockKBId
+          LOG_LEVEL: debug
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  # ==============================================
+  # Lambda Function: Session Manager
+  # ==============================================
+
+  SessionManagerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'sidea-ai-clone-${Environment}-session-manager-fn'
+      Runtime: provided.al2
+      Handler: App\Handlers\SessionManagerHandler
+      Role: !Ref LambdaExecutionRoleArn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: lambdas/session-manager-fn.zip
+      Timeout: 30
+      MemorySize: 1024
+      Layers:
+        - arn:aws:lambda:eu-central-1:534081306603:layer:php-84:22
+      Environment:
+        Variables:
+          APP_ENV: test
+          AWS_REGION: eu-central-1
+          WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
+          WA_MESSAGES_TABLE: !Ref MessagesTableName
+          WA_SESSIONS_TABLE: !Ref SessionsTableName
+          ROUTER_CONFIG_TABLE: !Ref ConfigTableName
+          BEDROCK_KB_ID: !Ref BedrockKBId
+          LOG_LEVEL: debug
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  # ==============================================
+  # Lambda Function: Topic Analyzer
+  # ==============================================
+
+  TopicAnalyzerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'sidea-ai-clone-${Environment}-topic-analyzer-fn'
+      Runtime: provided.al2
+      Handler: App\Handlers\AnalyzeTopicHandler
+      Role: !Ref LambdaExecutionRoleArn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: lambdas/topic-analyzer-fn.zip
+      Timeout: 30
+      MemorySize: 1024
+      Layers:
+        - arn:aws:lambda:eu-central-1:534081306603:layer:php-84:22
+      Environment:
+        Variables:
+          APP_ENV: test
+          AWS_REGION: eu-central-1
+          WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
+          WA_MESSAGES_TABLE: !Ref MessagesTableName
+          WA_SESSIONS_TABLE: !Ref SessionsTableName
+          ROUTER_CONFIG_TABLE: !Ref ConfigTableName
+          BEDROCK_KB_ID: !Ref BedrockKBId
+          LOG_LEVEL: debug
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  # ==============================================
+  # Lambda Function: Context Evaluator
+  # ==============================================
+
+  ContextEvaluatorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'sidea-ai-clone-${Environment}-context-evaluator-fn'
+      Runtime: provided.al2
+      Handler: App\Handlers\ContextEvaluatorHandler
+      Role: !Ref LambdaExecutionRoleArn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: lambdas/context-evaluator-fn.zip
+      Timeout: 30
+      MemorySize: 1024
+      Layers:
+        - arn:aws:lambda:eu-central-1:534081306603:layer:php-84:22
+      Environment:
+        Variables:
+          APP_ENV: test
+          AWS_REGION: eu-central-1
+          WA_MEDIA_BUCKET_NAME: !Ref MediaBucketName
+          WA_MESSAGES_TABLE: !Ref MessagesTableName
+          WA_SESSIONS_TABLE: !Ref SessionsTableName
+          ROUTER_CONFIG_TABLE: !Ref ConfigTableName
+          BEDROCK_KB_ID: !Ref BedrockKBId
+          LOG_LEVEL: debug
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+# ==============================================
+# Outputs
+# ==============================================
+
+Outputs:
+  ReplyStrategyFunctionArn:
+    Description: ARN of Reply Strategy Lambda Function
+    Value: !GetAtt ReplyStrategyFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ReplyStrategyFunctionArn'
+
+  GenerateResponseFunctionArn:
+    Description: ARN of Generate Response Lambda Function
+    Value: !GetAtt GenerateResponseFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-GenerateResponseFunctionArn'
+
+  TextToSpeechFunctionArn:
+    Description: ARN of Text to Speech Lambda Function
+    Value: !GetAtt TextToSpeechFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-TextToSpeechFunctionArn'
+
+  GetFileContentsFunctionArn:
+    Description: ARN of Get File Contents Lambda Function
+    Value: !GetAtt GetFileContentsFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-GetFileContentsFunctionArn'
+
+  SessionManagerFunctionArn:
+    Description: ARN of Session Manager Lambda Function
+    Value: !GetAtt SessionManagerFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-SessionManagerFunctionArn'
+
+  TopicAnalyzerFunctionArn:
+    Description: ARN of Topic Analyzer Lambda Function
+    Value: !GetAtt TopicAnalyzerFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-TopicAnalyzerFunctionArn'
+
+  ContextEvaluatorFunctionArn:
+    Description: ARN of Context Evaluator Lambda Function
+    Value: !GetAtt ContextEvaluatorFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ContextEvaluatorFunctionArn'

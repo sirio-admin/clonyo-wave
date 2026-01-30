@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Clonyo Wave Test Environment - Complete Stack (Infrastructure + Lambda + Step Function)'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: test-euc1
+    Description: Environment name
+    AllowedValues:
+      - test-euc1
+
+  BedrockKBId:
+    Type: String
+    Default: YT2DL1CBQI
+    Description: Bedrock Knowledge Base ID for eu-central-1
+
+  LambdaCodeBucket:
+    Type: String
+    Description: S3 bucket where Lambda deployment packages are stored
+
+  TemplatesBucket:
+    Type: String
+    Description: S3 bucket where CloudFormation templates are stored
+
+Resources:
+  # ==============================================
+  # Infrastructure Stack (DynamoDB, S3, IAM)
+  # ==============================================
+
+  InfrastructureStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://${TemplatesBucket}.s3.eu-central-1.amazonaws.com/cloudformation/infrastructure.yaml'
+      Parameters:
+        Environment: !Ref Environment
+        BedrockKBId: !Ref BedrockKBId
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+        - Key: Stack
+          Value: Infrastructure
+
+  # ==============================================
+  # Lambda Functions Stack
+  # ==============================================
+
+  LambdaStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: InfrastructureStack
+    Properties:
+      TemplateURL: !Sub 'https://${TemplatesBucket}.s3.eu-central-1.amazonaws.com/cloudformation/lambda-functions.yaml'
+      Parameters:
+        Environment: !Ref Environment
+        LambdaCodeBucket: !Ref LambdaCodeBucket
+        LambdaExecutionRoleArn: !GetAtt InfrastructureStack.Outputs.LambdaExecutionRoleArn
+        MessagesTableName: !GetAtt InfrastructureStack.Outputs.MessagesTableName
+        SessionsTableName: !GetAtt InfrastructureStack.Outputs.SessionsTableName
+        ConfigTableName: !GetAtt InfrastructureStack.Outputs.ConfigTableName
+        MediaBucketName: !GetAtt InfrastructureStack.Outputs.MediaBucketName
+        BedrockKBId: !Ref BedrockKBId
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+        - Key: Stack
+          Value: Lambda
+
+  # ==============================================
+  # Step Function Stack
+  # ==============================================
+
+  StepFunctionStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - InfrastructureStack
+      - LambdaStack
+    Properties:
+      TemplateURL: !Sub 'https://${TemplatesBucket}.s3.eu-central-1.amazonaws.com/cloudformation/step-function.yaml'
+      Parameters:
+        Environment: !Ref Environment
+        StepFunctionRoleArn: !GetAtt InfrastructureStack.Outputs.StepFunctionExecutionRoleArn
+        DefinitionS3Bucket: !Ref LambdaCodeBucket
+        DefinitionS3Key: step-function-definition-euc1.json
+        SessionManagerFunctionArn: !GetAtt LambdaStack.Outputs.SessionManagerFunctionArn
+        TopicAnalyzerFunctionArn: !GetAtt LambdaStack.Outputs.TopicAnalyzerFunctionArn
+        ContextEvaluatorFunctionArn: !GetAtt LambdaStack.Outputs.ContextEvaluatorFunctionArn
+        ReplyStrategyFunctionArn: !GetAtt LambdaStack.Outputs.ReplyStrategyFunctionArn
+        GenerateResponseFunctionArn: !GetAtt LambdaStack.Outputs.GenerateResponseFunctionArn
+        TextToSpeechFunctionArn: !GetAtt LambdaStack.Outputs.TextToSpeechFunctionArn
+        GetFileContentsFunctionArn: !GetAtt LambdaStack.Outputs.GetFileContentsFunctionArn
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+        - Key: Stack
+          Value: StepFunction
+
+# ==============================================
+# Outputs
+# ==============================================
+
+Outputs:
+  # Infrastructure Outputs
+  MessagesTableName:
+    Description: Name of Messages DynamoDB table
+    Value: !GetAtt InfrastructureStack.Outputs.MessagesTableName
+    Export:
+      Name: !Sub '${AWS::StackName}-MessagesTableName'
+
+  SessionsTableName:
+    Description: Name of Sessions DynamoDB table
+    Value: !GetAtt InfrastructureStack.Outputs.SessionsTableName
+    Export:
+      Name: !Sub '${AWS::StackName}-SessionsTableName'
+
+  ConfigTableName:
+    Description: Name of Config DynamoDB table
+    Value: !GetAtt InfrastructureStack.Outputs.ConfigTableName
+    Export:
+      Name: !Sub '${AWS::StackName}-ConfigTableName'
+
+  MediaBucketName:
+    Description: Name of Media S3 bucket
+    Value: !GetAtt InfrastructureStack.Outputs.MediaBucketName
+    Export:
+      Name: !Sub '${AWS::StackName}-MediaBucketName'
+
+  # Lambda Outputs
+  ReplyStrategyFunctionArn:
+    Description: ARN of Reply Strategy Lambda
+    Value: !GetAtt LambdaStack.Outputs.ReplyStrategyFunctionArn
+
+  GenerateResponseFunctionArn:
+    Description: ARN of Generate Response Lambda
+    Value: !GetAtt LambdaStack.Outputs.GenerateResponseFunctionArn
+
+  SessionManagerFunctionArn:
+    Description: ARN of Session Manager Lambda
+    Value: !GetAtt LambdaStack.Outputs.SessionManagerFunctionArn
+
+  TopicAnalyzerFunctionArn:
+    Description: ARN of Topic Analyzer Lambda
+    Value: !GetAtt LambdaStack.Outputs.TopicAnalyzerFunctionArn
+
+  ContextEvaluatorFunctionArn:
+    Description: ARN of Context Evaluator Lambda
+    Value: !GetAtt LambdaStack.Outputs.ContextEvaluatorFunctionArn
+
+  # Step Function Outputs
+  StateMachineArn:
+    Description: ARN of the Step Function State Machine
+    Value: !GetAtt StepFunctionStack.Outputs.StateMachineArn
+    Export:
+      Name: !Sub '${AWS::StackName}-StateMachineArn'
+
+  StateMachineName:
+    Description: Name of the Step Function State Machine
+    Value: !GetAtt StepFunctionStack.Outputs.StateMachineName
+
+  # Stack Information
+  EnvironmentName:
+    Description: Environment name
+    Value: !Ref Environment
+
+  DeploymentRegion:
+    Description: Deployment region
+    Value: !Ref AWS::Region

@@ -1,0 +1,27 @@
+{
+  "wa_contact": {
+    "wa_id": "test-user-12345",
+    "profile": {
+      "name": "Test User Francesco"
+    }
+  },
+  "message_ts": 1748100000,
+  "reply_to_wa_id": "test-user-12345",
+  "text": {
+    "body": "Come posso investire in ETF?"
+  },
+  "wa_phone_number_arn": "arn:aws:social-messaging:eu-central-1:533267110337:phone-number-id/mock-id",
+  "config": {
+    "wa_phone_number_arn": "arn:aws:social-messaging:eu-central-1:533267110337:phone-number-id/mock-id",
+    "kb_id": "YT2DL1CBQI",
+    "response_generator": {
+      "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "temperature": 0.7,
+      "max_tokens": 1000
+    },
+    "text_to_speech": {
+      "voice_id": "mock-voice-id",
+      "api_key": "mock-api-key"
+    }
+  }
+}

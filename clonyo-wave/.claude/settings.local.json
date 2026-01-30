@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(chmod:*)",
+      "Bash(bash scripts/prepare-step-function-definition.sh:*)",
+      "Bash(bash:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File scripts/package-lambdas.ps1)",
+      "Bash(powershell:*)",
+      "Bash(tee:*)",
+      "Bash(aws s3 ls:*)",
+      "Bash(aws iam get-role:*)",
+      "Bash(aws lambda get-layer-version:*)",
+      "Bash(aws lambda create-function:*)"
+    ]
+  }
+}

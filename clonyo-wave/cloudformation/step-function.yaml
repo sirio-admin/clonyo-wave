@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Clonyo Wave Test Step Function - Message Processor with Enhancement Plan v3'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: test-euc1
+    Description: Environment name
+
+  StepFunctionRoleArn:
+    Type: String
+    Description: ARN of Step Function Execution Role
+
+  DefinitionS3Bucket:
+    Type: String
+    Description: S3 bucket containing Step Function definition
+
+  DefinitionS3Key:
+    Type: String
+    Default: step-function-definition-euc1.json
+    Description: S3 key for Step Function definition JSON
+
+  # Lambda Function ARNs (from Lambda stack outputs)
+  SessionManagerFunctionArn:
+    Type: String
+  TopicAnalyzerFunctionArn:
+    Type: String
+  ContextEvaluatorFunctionArn:
+    Type: String
+  ReplyStrategyFunctionArn:
+    Type: String
+  GenerateResponseFunctionArn:
+    Type: String
+  TextToSpeechFunctionArn:
+    Type: String
+  GetFileContentsFunctionArn:
+    Type: String
+
+Resources:
+  WaMessageProcessorStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub 'sidea-ai-clone-${Environment}-wa-message-processor-sfn'
+      RoleArn: !Ref StepFunctionRoleArn
+      StateMachineType: STANDARD
+      DefinitionS3Location:
+        Bucket: !Ref DefinitionS3Bucket
+        Key: !Ref DefinitionS3Key
+      DefinitionSubstitutions:
+        SessionManagerFunctionArn: !Ref SessionManagerFunctionArn
+        TopicAnalyzerFunctionArn: !Ref TopicAnalyzerFunctionArn
+        ContextEvaluatorFunctionArn: !Ref ContextEvaluatorFunctionArn
+        ReplyStrategyFunctionArn: !Ref ReplyStrategyFunctionArn
+        GenerateResponseFunctionArn: !Ref GenerateResponseFunctionArn
+        TextToSpeechFunctionArn: !Ref TextToSpeechFunctionArn
+        GetFileContentsFunctionArn: !Ref GetFileContentsFunctionArn
+        MessagesTableName: !Sub 'sidea-ai-clone-${Environment}-messages-table'
+        SessionsTableName: !Sub 'sidea-ai-clone-${Environment}-sessions-table'
+        ConfigTableName: !Sub 'sidea-ai-clone-${Environment}-config-table'
+      LoggingConfiguration:
+        Level: ALL
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StepFunctionLogGroup.Arn
+      TracingConfiguration:
+        Enabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  StepFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/states/sidea-ai-clone-${Environment}-wa-message-processor-sfn'
+      RetentionInDays: 7
+
+Outputs:
+  StateMachineArn:
+    Description: ARN of the Step Function State Machine
+    Value: !GetAtt WaMessageProcessorStateMachine.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-StateMachineArn'
+
+  StateMachineName:
+    Description: Name of the Step Function State Machine
+    Value: !GetAtt WaMessageProcessorStateMachine.Name
+    Export:
+      Name: !Sub '${AWS::StackName}-StateMachineName'
