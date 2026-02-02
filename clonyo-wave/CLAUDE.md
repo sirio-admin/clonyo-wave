@@ -1,206 +1,210 @@
-# CLAUDE.md
+# Clonyo Wave - WhatsApp AI Clone Agent
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Overview
 
-## Project Overview
+Sistema di AI conversazionale per WhatsApp Business che gestisce sessioni, topic e contesto storico per fornire risposte intelligenti e contestualizzate.
 
-This is a serverless WhatsApp conversational AI system ("Clonyo-Wave") built on Laravel and deployed to AWS Lambda using Bref. It enables WhatsApp messaging with AI-powered responses and voice cloning capabilities.
+## Architettura
 
-**Core Flow:**
-1. WhatsApp messages trigger an AWS Step Function workflow (`sidea-ai-clone-prod-wa-message-processor-sfn`)
-2. Text messages are processed directly; audio messages are transcribed via Amazon Transcribe
-3. AI determines reply strategy (text vs audio) and complexity factor using Claude 3.5 Sonnet
-4. Responses are generated using AWS Bedrock with knowledge base retrieval
-5. Text-to-speech conversion with ElevenLabs for audio responses
-6. Messages stored in DynamoDB with conversation history
+```
+┌─────────────────┐     ┌──────────────────────────────────────────────────────────┐
+│  WhatsApp User  │────▶│              AWS Step Functions                          │
+└─────────────────┘     │                                                          │
+                        │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐  │
+                        │  │ ManageSession│──▶│ AnalyzeTopic │──▶│ Store Message│  │
+                        │  └──────────────┘   └──────────────┘   └──────────────┘  │
+                        │         │                  │                  │          │
+                        │         ▼                  ▼                  ▼          │
+                        │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐  │
+                        │  │ Get History  │──▶│Check Suffic. │──▶│ Query KB     │  │
+                        │  └──────────────┘   └──────────────┘   └──────────────┘  │
+                        │         │                  │                  │          │
+                        │         ▼                  ▼                  ▼          │
+                        │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐  │
+                        │  │Reply Strategy│──▶│Gen Response  │──▶│ Send Reply   │  │
+                        │  └──────────────┘   └──────────────┘   └──────────────┘  │
+                        └──────────────────────────────────────────────────────────┘
+```
 
-## Architecture
+## Componenti
+
+### Step Function: `sidea-ai-clone-test-euc1-wa-message-processor-sfn`
+
+Orchestratore principale che gestisce il flusso di elaborazione messaggi.
+
+**Flusso:**
+1. `ExtractVariables` - Estrae variabili dal payload (wa_contact_id, config, etc.)
+2. `ManageSession` - Crea/recupera sessione per l'utente
+3. `Store WA message meta` - Salva metadata del contatto
+4. `Evaluate message type` - Determina se testo o audio
+5. `TransformForResponse` - Prepara input per elaborazione
+6. `AnalyzeTopic` - Analizza e determina il topic del messaggio
+7. `Store WA received message` - Salva messaggio utente con session_topic_key
+8. `Get Session History` - Recupera storico messaggi per session+topic
+9. `Check Sufficiency` - Valuta se serve KB o basta lo storico
+10. `Query Static KB` - (opzionale) Interroga Knowledge Base Bedrock
+11. `Get reply strategy` - Determina strategia di risposta (text/audio)
+12. `Build Knowledge based response` - Genera risposta con LLM
+13. `Reply to WA User` - Invia risposta (mock per ora)
+14. `Store WA sent message` - Salva risposta assistant
+15. `Update Session Meta` - Aggiorna metadata sessione
 
 ### Lambda Functions
 
-Each lambda function is a complete Laravel application in its own directory under `lambdas/`:
+| Lambda | Scopo |
+|--------|-------|
+| `session-manager-fn` | Gestisce creazione/recupero sessioni |
+| `topic-analyzer-fn` | Analizza testo e determina topic_id |
+| `context-evaluator-fn` | Valuta se lo storico è sufficiente |
+| `reply-strategy-fn` | Decide modalità risposta (text/audio) |
+| `generate-response-fn` | Genera risposta con Claude via Bedrock |
+| `text-to-speech-fn` | Converte testo in audio (ElevenLabs) |
+| `get-file-contents-fn` | Recupera contenuti da S3/URL |
 
-- **reply-strategy-fn**: Analyzes user input to determine response mode (text/audio) and complexity factor
-  - Handler: `App\Handlers\ReplyStrategyHandler`
-  - Service: `App\Services\ReplyStrategyService`
-  - Uses Claude 3.5 Sonnet via Bedrock to analyze conversation context
+### DynamoDB Tables
 
-- **generate-response-fn**: Generates AI responses using AWS Bedrock Knowledge Bases
-  - Handler: `App\Handlers\GenerateResponseHandler`
-  - Service: `App\Services\ResponseGenerator\BedrockService`
-  - Retrieves conversation history from DynamoDB
+#### Messages Table: `sidea-ai-clone-test-euc1-messages-table`
 
-- **text-to-speech-fn**: Converts text responses to audio using ElevenLabs voice cloning
-  - Handler: `App\Handlers\TextToSpeechHandler`
-  - Service: `App\Services\TextToSpeechConverter\ElevenlabsService`
-  - Uploads audio files to S3
+Memorizza tutti i messaggi (user e assistant).
 
-- **get-file-contents-fn**: Retrieves transcription results from Amazon Transcribe
-  - Handler: `App\Handlers\GetFileContentsHandler`
-  - Fetches transcript JSON from S3 URI
+| Attributo | Tipo | Descrizione |
+|-----------|------|-------------|
+| `pk` (PK) | String | `S#<wa_phone_number_arn>#C#<wa_contact_id>` |
+| `sk` (SK) | String | `META` oppure `M#<timestamp>` |
+| `session_topic_key` | String | `<session_id>#<topic_id>` - per GSI |
+| `role` | String | `user` o `assistant` |
+| `content` | String | Contenuto del messaggio |
+| `session_id` | String | ID sessione |
+| `topic_id` | String | ID topic |
 
-### Step Function Workflow
+**GSI: `session-topic-index`**
+- PK: `session_topic_key`
+- SK: `sk`
+- Projection: ALL
 
-The workflow is defined in `step-function-definition.json` and uses JSONata for transformations:
+#### Sessions Table: `sidea-ai-clone-test-euc1-sessions-v2-table`
 
-1. **ExtractVariables**: Extract contact ID, phone ARN, config from input
-2. **Store WA message meta**: Update DynamoDB with last message timestamp
-3. **Evaluate message type**: Route based on text vs audio
-4. **StartTranscriptionJob** (audio path): Transcribe audio with Amazon Transcribe
-5. **TransformForResponse**: Normalize input for processing
-6. **Store WA received message**: Save user message to DynamoDB
-7. **Get reply strategy**: Lambda determines text/audio mode and complexity
-8. **Build Knowledge based response**: Lambda generates AI response
-9. **Choose output type**: Route to text or audio response
-10. **Generate audio from text** (audio path): Lambda converts to speech
-11. **Reply to WA User**: Send message via AWS Social Messaging
-12. **Store WA sent message**: Save assistant response to DynamoDB
+Traccia combinazioni sessione+topic per utente.
 
-### Data Storage
+| Attributo | Tipo | Descrizione |
+|-----------|------|-------------|
+| `pk` (PK) | String | `<wa_contact_id>` |
+| `sk` (SK) | String | `S#<session_id>#T#<topic_id>` |
+| `session_id` | String | ID sessione |
+| `topic_id` | String | ID topic |
+| `last_active_at` | Number | Timestamp ultima attività |
 
-**DynamoDB Table**: `sidea-ai-clone-prod-messages-table`
+## Logica di Contesto
 
-Key structure:
-- `pk`: `S#{wa_phone_number_arn}#C#{contact_id}` (partition key)
-- `sk`: `META` for contact metadata, `M#{timestamp}` for messages (sort key)
-- Message attributes: `role` (user/assistant), `type` (text/audio), `content`
+Il sistema implementa una logica di recupero contesto intelligente:
 
-**S3 Bucket**: `sidea-ai-clone-prod-wa-media-s3`
-- Audio files from users and generated responses
-
-### Project Structure (within each lambda)
+1. **Stesso utente + Stessa sessione + Stesso topic** → Recupera storico conversazione
+2. **Check Sufficiency** → Valuta se rispondere con lo storico o serve KB
+3. **Knowledge Base** → Interroga Bedrock KB se serve più contesto
 
 ```
-lambdas/{function-name}/
-├── app/
-│   ├── Handlers/          # Lambda entry points (implement Bref\Event\Handler)
-│   ├── Contracts/         # Interfaces (ResponseGenerator, ReplyStrategy, etc.)
-│   ├── Services/          # Business logic implementations
-│   ├── Data/              # DTOs using Spatie Laravel Data
-│   └── Repositories/      # Data access (DynamoDB, Config)
-├── config/
-│   └── ai-clone.php       # Configuration for AI services, AWS resources
-├── composer.json          # PHP dependencies (Laravel 12, Bref, AWS SDK)
-└── .github/
-    └── copilot-instructions.md  # Architecture documentation
+User: "Info sui fondi"     → Topic: investments, Session: abc123
+User: "Quali rendimenti?"  → Topic: investments, Session: abc123
+                             ↓
+                           Get Session History query:
+                           session_topic_key = "abc123#investments"
+                             ↓
+                           Recupera messaggi precedenti sullo stesso topic
 ```
 
-## Development Commands
+## Esecuzione Test
 
-### Dependencies
+### Eseguire un test
 ```bash
-# Install PHP dependencies (in each lambda directory)
-cd lambdas/{function-name}
-composer install
-
-# Install npm dependencies
-npm install
+AWS_PROFILE=sirio aws stepfunctions start-execution \
+  --state-machine-arn arn:aws:states:eu-central-1:533267110337:stateMachine:sidea-ai-clone-test-euc1-wa-message-processor-sfn \
+  --input file://test-payloads/test-01-prima-domanda.json \
+  --region eu-central-1
 ```
 
-### Testing
+### Verificare Messages Table
 ```bash
-# Run all tests with Pest
-./vendor/bin/pest
-
-# Run specific test file
-./vendor/bin/pest tests/Unit/SomeTest.php
-
-# Run with coverage
-./vendor/bin/pest --coverage
+AWS_PROFILE=sirio aws dynamodb scan \
+  --table-name sidea-ai-clone-test-euc1-messages-table \
+  --region eu-central-1
 ```
 
-### Code Quality
+### Query per session+topic specifico
 ```bash
-# Auto-fix code style with Laravel Pint
-composer fix
-# or
-./vendor/bin/pint
-
-# Run static analysis with PHPStan
-composer stan
-# or
-./vendor/bin/phpstan analyse --memory-limit=2G
+AWS_PROFILE=sirio aws dynamodb query \
+  --table-name sidea-ai-clone-test-euc1-messages-table \
+  --index-name session-topic-index \
+  --key-condition-expression "session_topic_key = :stk" \
+  --expression-attribute-values '{":stk": {"S": "SESSION_ID#TOPIC_ID"}}' \
+  --region eu-central-1
 ```
 
-### Local Development
+### Verificare Sessions Table
 ```bash
-# Start development environment (server, queue, logs, vite)
-composer dev
-
-# Clear Laravel config cache
-php artisan config:clear
+AWS_PROFILE=sirio aws dynamodb query \
+  --table-name sidea-ai-clone-test-euc1-sessions-v2-table \
+  --key-condition-expression "pk = :pk" \
+  --expression-attribute-values '{":pk": {"S": "393331234567"}}' \
+  --region eu-central-1
 ```
 
-## Key Development Patterns
+## Deploy
 
-### Handler Pattern
-All Lambda functions follow this pattern:
-1. Handler class implements `Bref\Event\Handler`
-2. Receives event array and Context from AWS
-3. Delegates to a service class through dependency injection
-4. Returns array response (serialized to JSON)
+### Infrastructure
+```bash
+AWS_PROFILE=sirio aws cloudformation deploy \
+  --template-file cloudformation/infrastructure.yaml \
+  --stack-name clonyo-wave-test-euc1-infrastructure \
+  --region eu-central-1 \
+  --capabilities CAPABILITY_NAMED_IAM
+```
 
-Example:
-```php
-class ReplyStrategyHandler implements Handler
+### Step Function
+```bash
+# Upload definition to S3
+AWS_PROFILE=sirio aws s3 cp step-function-definition-euc1.json \
+  s3://sidea-ai-clone-test-euc1-wa-media-s3/ --region eu-central-1
+
+# Deploy stack
+AWS_PROFILE=sirio aws cloudformation deploy \
+  --template-file cloudformation/step-function.yaml \
+  --stack-name clonyo-wave-test-euc1-step-function \
+  --region eu-central-1 \
+  --parameter-overrides \
+    DefinitionS3Key=step-function-definition-euc1.json \
+    ... (altri parametri)
+```
+
+## Configurazione
+
+### Payload di Input
+
+```json
 {
-    public function __construct(
-        protected ReplyStrategy $service,
-        protected MessagesRepository $messages,
-    ) {}
-
-    public function handle(mixed $event, Context $context): array
-    {
-        return $this->service
-            ->withMessages($this->messages->all($event['messages_key']))
-            ->analyzeInput($event['userInput']);
+  "wa_contact": {
+    "wa_id": "393331234567",
+    "profile": { "name": "Nome Utente" }
+  },
+  "message_ts": 1738350000,
+  "reply_to_wa_id": "393331234567",
+  "text": { "body": "Testo del messaggio" },
+  "config": {
+    "wa_phone_number_arn": "arn:...",
+    "kb_id": "BEDROCK_KB_ID",
+    "response_generator": {
+      "model_id": "anthropic.claude-3-sonnet-...",
+      "system_prompt": "..."
     }
+  }
 }
 ```
 
-### Configuration
-- AWS resources configured via environment variables (see `*-config.json` files)
-- Service configuration in `config/ai-clone.php`
-- Config retrieved from DynamoDB `sidea-ai-clone-prod-config-table` at runtime
+## Stati Mock (TODO)
 
-### Data Transfer Objects
-Uses Spatie Laravel Data package for type-safe DTOs:
-- `MessageData`: Individual message structure
-- `ConversationMessageData`: Message with role (user/assistant)
-- `ResponseGeneratorData`: Configuration for response generation
-- `TextToSpeechData`: Configuration for TTS
+I seguenti stati sono attualmente mock e devono essere implementati:
 
-### AWS Service Integration
-- DynamoDB operations via Laravel's database facade or direct SDK calls
-- Bedrock models invoked via `BedrockRuntimeClient`
-- S3 operations via Laravel Flysystem with AWS S3 adapter
+- `Reply to WA User with text` - Invio messaggio WhatsApp
+- `PostWhatsAppMessageMedia` - Upload media WhatsApp
+- `Reply to WA User with media` - Invio audio WhatsApp
 
-## Important Considerations
-
-### Reply Strategy Logic
-The `ReplyStrategyService` uses sophisticated heuristics to determine text vs audio mode:
-- Analyzes conversation context (last 10 messages)
-- Considers topic complexity, question type, and emotional sensitivity
-- Returns `complexity_factor` (0.0-1.0) and `mode` (text/audio)
-- Small talk and info lookups → text
-- Technical discussions, personal advice, emotional topics → audio
-
-### Message History
-- Conversation messages limited to last 10 for context (see `ReplyStrategyService::withMessages`)
-- Messages stored chronologically in DynamoDB using timestamp in sort key
-- Both user and assistant messages include content and type metadata
-
-### Deployment Context
-- Functions are deployed with Bref PHP 8.4 runtime layer
-- Handler specified in Lambda config (e.g., `App\\Handlers\\ReplyStrategyHandler`)
-- Environment variables set per-function (see `*-config.json` files)
-- Each function has 30-60s timeout and 1024MB memory
-
-### Lambda Configuration Files
-The `*-config.json` files at the lambda root contain:
-- Handler class path
-- Runtime environment variables (table names, ARNs, API keys)
-- Timeout and memory settings
-- IAM role ARNs
-
-These are reference files showing the deployed configuration, not used for local deployment.
+Resource da usare: `arn:aws:states:::aws-sdk:socialmessaging:sendWhatsAppMessage`

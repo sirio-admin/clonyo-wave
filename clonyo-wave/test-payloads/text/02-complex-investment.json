@@ -1,0 +1,29 @@
+{
+  "wa_contact": {
+    "wa_id": "393462454282",
+    "profile": {
+      "name": "Test User"
+    }
+  },
+  "message_ts": 1738252860,
+  "reply_to_wa_id": "393462454282",
+  "text": {
+    "body": "Vorrei diversificare il mio portafoglio tra azioni, obbligazioni e immobiliare. Quali sono le percentuali consigliate per un profilo di rischio moderato?"
+  },
+  "config": {
+    "wa_phone_number_arn": "arn:aws:social-messaging:eu-west-1:533267110337:phone-number-id/01234567890abcdef",
+    "response_generator": {
+      "kb_id": "PDZQMPE5HM",
+      "model_id": "anthropic.claude-3-sonnet-20240229-v1:0",
+      "temperature": 0.5,
+      "max_tokens": 4096,
+      "system_prompt": "Sei un assistente finanziario esperto. Rispondi in modo chiaro e professionale."
+    },
+    "text_to_speech": {
+      "voice_id": "21m00Tcm4TlvDq8ikWAM",
+      "model_id": "eleven_multilingual_v2",
+      "stability": 0.5,
+      "similarity_boost": 0.75
+    }
+  }
+}

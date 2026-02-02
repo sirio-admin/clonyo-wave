@@ -5,42 +5,31 @@ namespace App\Handlers;
 use Aws\BedrockRuntime\BedrockRuntimeClient;
 use Bref\Context\Context;
 use Bref\Event\Handler;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class AnalyzeTopicHandler implements Handler
 {
-    private ?BedrockRuntimeClient $bedrock = null;
-
-    private function getBedrock(): BedrockRuntimeClient
-    {
-        if ($this->bedrock === null) {
-            $this->bedrock = new BedrockRuntimeClient([
-                'region' => 'eu-central-1',
-                'version' => 'latest',
-            ]);
-        }
-        return $this->bedrock;
-    }
+    public function __construct(
+        protected BedrockRuntimeClient $bedrock
+    ) {}
 
     public function handle(mixed $event, Context $context): array
     {
-        error_log("AnalyzeTopic received: " . json_encode($event));
+        Log::info("AnalyzeTopic received", ['event' => $event]);
 
         $text = $event['text'] ?? '';
         $currentTopicId = $event['current_topic_id'] ?? null;
 
         if (empty($text)) {
-            error_log("Empty text, returning current topic");
             return ['topic_id' => $currentTopicId ?? 'general', 'keywords' => []];
         }
 
-        $systemPrompt = "You are a Topic Analyzer. Analyze the user input. Extract the main topic (1-2 words) and 3 keywords. 
+        $systemPrompt = "You are a Topic Analyzer. Analyze the user input. Extract the main topic (1-2 words) and 3 keywords.
         If a Previous Topic is provided, check if the input is a continuation. If yes, reuse the same Topic ID (if it was passed as keyword, otherwise output the topic name).
         Output ONLY JSON: {\"topic\": \"string\", \"keywords\": [\"string\"]}";
 
         $prompt = "User Input: $text\nPrevious Topic ID: " . ($currentTopicId ?? 'None');
 
-        // Haiku Payload
         $body = [
             'anthropic_version' => 'bedrock-2023-05-31',
             'max_tokens' => 300,
@@ -51,21 +40,17 @@ class AnalyzeTopicHandler implements Handler
         ];
 
         try {
-            $result = $this->getBedrock()->invokeModel([
+            $result = $this->bedrock->invokeModel([
                 'modelId' => 'anthropic.claude-3-haiku-20240307-v1:0',
                 'contentType' => 'application/json',
                 'body' => json_encode($body)
             ]);
-            
+
             $response = json_decode($result['body']->getContents(), true);
             $content = json_decode($response['content'][0]['text'], true);
-            
+
             $topicName = $content['topic'] ?? 'General';
             $keywords = $content['keywords'] ?? [];
-            
-            // Simple logic: if topic name is same as before, keep ID, else generate new
-            // In real app, we might use embeddings to check similarity.
-            // Here we just map String -> ID (md5) for consistency
             $topicId = md5(strtolower($topicName));
 
             return [
@@ -75,7 +60,7 @@ class AnalyzeTopicHandler implements Handler
             ];
 
         } catch (\Exception $e) {
-            error_log("Bedrock Error: " . $e->getMessage());
+            Log::error("Bedrock Error", ['error' => $e->getMessage()]);
             return [
                 'topic_id' => $currentTopicId ?? 'general',
                 'topic_name' => 'General',

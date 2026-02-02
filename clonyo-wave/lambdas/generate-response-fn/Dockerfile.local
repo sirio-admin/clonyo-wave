@@ -1,0 +1,13 @@
+FROM bref/php-82-fpm:2
+
+# Copy application code
+COPY . /var/task
+
+# Install dependencies
+RUN cd /var/task && composer install --no-dev --optimize-autoloader
+
+# Set working directory
+WORKDIR /var/task
+
+# Lambda handler
+CMD ["public/index.php"]

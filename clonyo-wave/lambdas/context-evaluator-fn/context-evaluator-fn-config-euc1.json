@@ -1,7 +1,7 @@
 {
   "FunctionName": "sidea-ai-clone-test-euc1-context-evaluator-fn",
   "Runtime": "provided.al2",
-  "Handler": "App\\Handlers\\ContextEvaluatorHandler",
+  "Handler": "handler.php",
   "Timeout": 30,
   "MemorySize": 1024,
   "Role": "arn:aws:iam::533267110337:role/sidea-ai-clone-test-euc1-lambda-execution-role",

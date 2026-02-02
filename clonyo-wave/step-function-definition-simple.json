@@ -1,0 +1,150 @@
+{
+  "Comment": "Simplified Clone AI state machine for LocalStack testing (no Lambda calls)",
+  "StartAt": "ExtractVariables",
+  "QueryLanguage": "JSONata",
+  "States": {
+    "ExtractVariables": {
+      "Type": "Pass",
+      "Next": "Store WA message meta",
+      "Assign": {
+        "wa_contact_id": "{% $states.input.wa_contact.wa_id %}",
+        "message_ts": "{% $states.input.message_ts %}",
+        "reply_to_wa_id": "{% $states.input.reply_to_wa_id %}",
+        "wa_phone_number_arn": "{% $states.input.config.wa_phone_number_arn %}",
+        "config": "{% $states.input.config %}"
+      }
+    },
+    "Store WA message meta": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "sidea-ai-clone-prod-messages-table",
+        "Item": {
+          "pk": {
+            "S": "{% 'S#' & $wa_phone_number_arn & '#C#' & $wa_contact_id %}"
+          },
+          "sk": {
+            "S": "META"
+          },
+          "wa_phone_number_arn": {
+            "S": "{% $wa_phone_number_arn %}"
+          },
+          "wa_contact_id": {
+            "S": "{% $wa_contact_id %}"
+          },
+          "wa_contact_profile_name": {
+            "S": "{% $states.input.wa_contact.profile.name %}"
+          },
+          "last_message_at_ts": {
+            "N": "{% $string($states.input.message_ts) %}"
+          }
+        }
+      },
+      "Output": "{% $states.input %}",
+      "Next": "Evaluate message type"
+    },
+    "Evaluate message type": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Next": "TransformForResponse",
+          "Condition": "{% $exists($states.input.text) %}",
+          "Comment": "text"
+        },
+        {
+          "Next": "MockAudioTranscript",
+          "Condition": "{% $exists($states.input.audio) %}",
+          "Comment": "audio"
+        }
+      ],
+      "Default": "Fail"
+    },
+    "MockAudioTranscript": {
+      "Type": "Pass",
+      "Comment": "Mock audio transcription for testing",
+      "Next": "TransformForResponse",
+      "Output": {
+        "transcript": "Questa è una trascrizione simulata per test"
+      }
+    },
+    "TransformForResponse": {
+      "Type": "Pass",
+      "Next": "Store WA received message",
+      "Output": {
+        "userInput": "{% $exists($states.input.transcript) ? $states.input.transcript : $states.input.text.body %}",
+        "original_input_type": "{% $exists($states.input.transcript) ? 'audio' : 'text' %}",
+        "config": "{% $config.response_generator %}",
+        "messages_key": "{% 'S#' & $wa_phone_number_arn & '#C#' & $wa_contact_id %}"
+      }
+    },
+    "Store WA received message": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "sidea-ai-clone-prod-messages-table",
+        "Item": {
+          "pk": {
+            "S": "{% 'S#' & $wa_phone_number_arn & '#C#' & $wa_contact_id %}"
+          },
+          "sk": {
+            "S": "{% 'M#' & $message_ts %}"
+          },
+          "role": {
+            "S": "user"
+          },
+          "type": {
+            "S": "{% $states.input.original_input_type %}"
+          },
+          "content": {
+            "S": "{% $states.input.userInput %}"
+          }
+        }
+      },
+      "Output": "{% $states.input %}",
+      "Next": "MockAIResponse"
+    },
+    "MockAIResponse": {
+      "Type": "Pass",
+      "Comment": "Mock AI response for testing - in production this calls Bedrock",
+      "Next": "Store WA sent message",
+      "Assign": {
+        "output_message_type": "text",
+        "output_message_content": "{% 'Questa è una risposta simulata. In produzione, qui verrebbe chiamato AWS Bedrock con Knowledge Base per generare una risposta personalizzata basata sulla domanda: ' & $states.input.userInput %}"
+      }
+    },
+    "Store WA sent message": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "sidea-ai-clone-prod-messages-table",
+        "Item": {
+          "pk": {
+            "S": "{% 'S#' & $wa_phone_number_arn & '#C#' & $wa_contact_id %}"
+          },
+          "sk": {
+            "S": "{% 'M#' & $string($round($millis() / 1000)) %}"
+          },
+          "role": {
+            "S": "assistant"
+          },
+          "type": {
+            "S": "{% $output_message_type %}"
+          },
+          "content": {
+            "S": "{% $output_message_content %}"
+          }
+        }
+      },
+      "Output": "{% $states.input %}",
+      "Next": "Success"
+    },
+    "Success": {
+      "Type": "Succeed"
+    },
+    "Fail": {
+      "Type": "Fail",
+      "Error": "InvalidMessageType",
+      "Cause": "Message must contain either text or audio"
+    }
+  }
+}

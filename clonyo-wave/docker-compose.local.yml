@@ -12,7 +12,14 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AWS_DEFAULT_REGION=eu-west-1
       - LAMBDA_EXECUTOR=docker
+      # Pass AWS credentials to Lambda functions (for calling real Bedrock)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - KNOWLEDGE_BASE_ID=${KNOWLEDGE_BASE_ID}
     volumes:
       - "./init-scripts:/etc/localstack/init/ready.d"
       - "./lambdas:/opt/lambdas" # Mount source code for mounting in lambdas
+      - ".:/opt/project" # Mount project root for step function definitions
       - "/var/run/docker.sock:/var/run/docker.sock"
+    env_file:
+      - ../.env

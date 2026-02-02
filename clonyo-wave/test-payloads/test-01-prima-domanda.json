@@ -1,0 +1,28 @@
+{
+  "wa_contact": {
+    "wa_id": "393331234567",
+    "profile": {
+      "name": "Marco Rossi"
+    }
+  },
+  "message_ts": 1738350000,
+  "reply_to_wa_id": "393331234567",
+  "text": {
+    "body": "Ciao, vorrei informazioni sui fondi comuni di investimento"
+  },
+  "config": {
+    "wa_phone_number_arn": "arn:aws:social-messaging:eu-central-1:533267110337:phone-number-id/test-phone-001",
+    "kb_id": "YT2DL1CBQI",
+    "response_generator": {
+      "kb_id": "YT2DL1CBQI",
+      "model_id": "anthropic.claude-3-sonnet-20240229-v1:0",
+      "temperature": 0.5,
+      "max_tokens": 4096,
+      "system_prompt": "Sei un assistente finanziario esperto. Rispondi in modo chiaro e professionale."
+    },
+    "text_to_speech": {
+      "voice_id": "21m00Tcm4TlvDq8ikWAM",
+      "model_id": "eleven_multilingual_v2"
+    }
+  }
+}

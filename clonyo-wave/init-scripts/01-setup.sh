@@ -1,28 +1,21 @@
 #!/bin/bash
 set -e
 
-echo "Installing zip..."
-apt-get update > /dev/null
-apt-get install -y zip > /dev/null
+echo "=== LocalStack Initialization Started ==="
 
 echo "Creating DynamoDB Tables..."
+
+# Sessions table
 awslocal dynamodb create-table \
     --table-name sidea-ai-clone-prod-sessions-table \
-    --attribute-definitions \
-        AttributeName=session_id,AttributeType=S \
-        AttributeName=wa_contact_id,AttributeType=S \
+    --attribute-definitions AttributeName=session_id,AttributeType=S \
     --key-schema AttributeName=session_id,KeyType=HASH \
-    --global-secondary-indexes \
-        "[
-            {
-                \"IndexName\": \"wa_contact_id_index\",
-                \"KeySchema\": [{\"AttributeName\":\"wa_contact_id\",\"KeyType\":\"HASH\"}],
-                \"Projection\": {\"ProjectionType\":\"ALL\"},
-                \"ProvisionedThroughput\": {\"ReadCapacityUnits\": 5, \"WriteCapacityUnits\": 5}
-            }
-        ]" \
-    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+    --billing-mode PAY_PER_REQUEST \
+    2>/dev/null || echo "Sessions table already exists"
 
+echo "✓ Sessions table ready"
+
+# Messages table
 awslocal dynamodb create-table \
     --table-name sidea-ai-clone-prod-messages-table \
     --attribute-definitions \
@@ -31,102 +24,108 @@ awslocal dynamodb create-table \
     --key-schema \
         AttributeName=pk,KeyType=HASH \
         AttributeName=sk,KeyType=RANGE \
-    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+    --billing-mode PAY_PER_REQUEST \
+    2>/dev/null || echo "Messages table already exists"
 
-echo "Deploying Lambdas..."
+echo "✓ Messages table ready"
 
-DEPLOY_LAMBDA() {
-    FUNCTION_NAME=$1
-    HANDLER=$2
-    FOLDER=$3
-    
-    echo "Deploying $FUNCTION_NAME..."
-    cd /opt/lambdas/$FOLDER
-    zip -r -q /tmp/$FUNCTION_NAME.zip . -x "vendor/*" # Exclude vendor to speed up if mounting, BUT we need vendor to run. Assuming vendor is present or we rely on layer.
-    # Actually for local testing without layers, we need vendor.
-    # Re-zipping with everything.
-    zip -r -q /tmp/$FUNCTION_NAME.zip .
-    
-    awslocal lambda create-function \
-        --function-name $FUNCTION_NAME \
-        --runtime provided.al2 \
-        --role arn:aws:iam::000000000000:role/lambda-role \
-        --handler $HANDLER \
-        --zip-file fileb:///tmp/$FUNCTION_NAME.zip \
-        --layers arn:aws:lambda:eu-west-1:209497400698:layer:php-82:16 
-        # Note: Bref layers from real AWS won't work in LocalStack unless we mock them or use custom runtime image.
-        # But we mounted 'bref/php-82' in pure docker-compose before? 
-        # Wait, Step Functions calls lambda ARN. LocalStack spawns it. 
-        # If we use Zip deployment in LocalStack, LocalStack uses 'lambda-executor' to run.
-        # If executor is 'docker', it spins up a container. Which image? 
-        # It detects runtime. 'provided.al2' uses amazonlinux.
-        # To run PHP, we generally need the Bref layer.
-        # In LocalStack, standard layers (ARN references) are mocked but content is not downloaded from AWS.
-        # We need to either: 
-        # A) Use valid LocalStack PRO feature for layers
-        # B) Zip the 'bootstrap' binary from Bref into the zip.
-        
-}
+# Config table (for runtime configuration)
+awslocal dynamodb create-table \
+    --table-name sidea-ai-clone-prod-config-table \
+    --attribute-definitions AttributeName=wa_phone_number_arn,AttributeType=S \
+    --key-schema AttributeName=wa_phone_number_arn,KeyType=HASH \
+    --billing-mode PAY_PER_REQUEST \
+    2>/dev/null || echo "Config table already exists"
 
-# For LocalStack Open Source, layers are tricky.
-# BETTER APPROACH for LocalStack + PHP:
-# Use 'bref/php-82' image directly via docker-reuse or just ensuring 'bootstrap' is in the root of the zip.
-# Bref puts 'bootstrap' in 'vendor/bin/bref-bootstrap' usually? 
-# No, standard Bref deployment puts a bootstrap file.
-# Since we are "implementing locally", ensuring `vendor` is there and valid `bootstrap` is key.
-# If user ran `composer install`, `vendor/bin/bref-bootstrap` exists.
-# We need to copy it to `bootstrap` in the root of the zip.
+echo "✓ Config table ready"
 
-PREPARE_AND_DEPLOY() {
-    FUNCTION_NAME=$1
-    HANDLER=$2
-    FOLDER=$3
-    
-    echo "Packaging $FUNCTION_NAME..."
-    cd /opt/lambdas/$FOLDER
-    
-    # Check for vendor
-    if [ ! -d "vendor" ]; then
-        echo "WARNING: vendor directory missing in $FOLDER. Function might fail."
-    fi
-    
-    # Copy bootstrap if needed (Bref structure)
-    # Bref normally suggests using 'layers' for runtime. Without layers (LocalStack Community), we must include the runtime binary 'php' and 'bootstrap'.
-    # This is complex to set up from scratch in a bash script without a build image.
-    
-    # SIMPLIFIED APPROACH:
-    # We will assume for this PoC that we just upload the code. 
-    # If execution fails due to missing runtime, we will debug.
-    # But to make it work, usually we define Runtime: provided.al2 and user ensures environment is right.
-    # Let's try to pass the handler.
-    
-    zip -r -q /tmp/$FUNCTION_NAME.zip .
-    
-    awslocal lambda create-function \
-        --function-name $FUNCTION_NAME \
-        --runtime provided.al2 \
-        --role arn:aws:iam::000000000000:role/lambda-role \
-        --handler $HANDLER \
-        --zip-file fileb:///tmp/$FUNCTION_NAME.zip \
-        --environment "Variables={AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY,AWS_REGION=$AWS_REGION}"
-}
+echo "Creating S3 Bucket..."
+awslocal s3 mb s3://sidea-ai-clone-prod-wa-media-s3 2>/dev/null || echo "Bucket already exists"
+echo "✓ S3 bucket ready"
 
-PREPARE_AND_DEPLOY "session-manager-fn" "App\Handlers\SessionManagerHandler" "session-manager-fn"
-PREPARE_AND_DEPLOY "topic-analyzer-fn" "App\Handlers\AnalyzeTopicHandler" "topic-analyzer-fn"
-PREPARE_AND_DEPLOY "context-evaluator-fn" "App\Handlers\ContextEvaluatorHandler" "context-evaluator-fn"
-# Existing
-PREPARE_AND_DEPLOY "reply-strategy-fn" "App\Handlers\ReplyStrategyHandler" "reply-strategy-fn"
-PREPARE_AND_DEPLOY "generate-response-fn" "App\Handlers\GenerateResponseHandler" "generate-response-fn"
-PREPARE_AND_DEPLOY "text-to-speech-fn" "App\Handlers\TextToSpeechHandler" "text-to-speech-fn"
-PREPARE_AND_DEPLOY "get-file-contents-fn" "App\Handlers\GetFileContentsHandler" "get-file-contents-fn"
+echo "Deploying Lambda Functions with Hot Reload..."
+
+# Deploy Lambda functions using hot-reload magic bucket
+# This mounts the local code directly into the Lambda container
+
+# 1. reply-strategy-fn
+awslocal lambda create-function \
+    --function-name reply-strategy-fn \
+    --runtime provided.al2 \
+    --role arn:aws:iam::000000000000:role/lambda-role \
+    --handler App\\Handlers\\ReplyStrategyHandler \
+    --code S3Bucket="hot-reload",S3Key="/opt/lambdas/reply-strategy-fn" \
+    --environment "Variables={AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY,AWS_REGION=eu-west-1,KNOWLEDGE_BASE_ID=$KNOWLEDGE_BASE_ID}" \
+    --timeout 30 \
+    --memory-size 1024 \
+    2>/dev/null || echo "reply-strategy-fn already exists"
+
+# 2. generate-response-fn
+awslocal lambda create-function \
+    --function-name generate-response-fn \
+    --runtime provided.al2 \
+    --role arn:aws:iam::000000000000:role/lambda-role \
+    --handler App\\Handlers\\GenerateResponseHandler \
+    --code S3Bucket="hot-reload",S3Key="/opt/lambdas/generate-response-fn" \
+    --environment "Variables={AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY,AWS_REGION=eu-west-1,KNOWLEDGE_BASE_ID=$KNOWLEDGE_BASE_ID}" \
+    --timeout 30 \
+    --memory-size 1024 \
+    2>/dev/null || echo "generate-response-fn already exists"
+
+# 3. text-to-speech-fn
+awslocal lambda create-function \
+    --function-name text-to-speech-fn \
+    --runtime provided.al2 \
+    --role arn:aws:iam::000000000000:role/lambda-role \
+    --handler App\\Handlers\\TextToSpeechHandler \
+    --code S3Bucket="hot-reload",S3Key="/opt/lambdas/text-to-speech-fn" \
+    --environment "Variables={AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY,AWS_REGION=eu-west-1}" \
+    --timeout 60 \
+    --memory-size 1024 \
+    2>/dev/null || echo "text-to-speech-fn already exists"
+
+# 4. get-file-contents-fn
+awslocal lambda create-function \
+    --function-name get-file-contents-fn \
+    --runtime provided.al2 \
+    --role arn:aws:iam::000000000000:role/lambda-role \
+    --handler App\\Handlers\\GetFileContentsHandler \
+    --code S3Bucket="hot-reload",S3Key="/opt/lambdas/get-file-contents-fn" \
+    --environment "Variables={AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY,AWS_REGION=eu-west-1}" \
+    --timeout 10 \
+    --memory-size 1024 \
+    2>/dev/null || echo "get-file-contents-fn already exists"
+
+echo "✓ Lambda functions deployed with hot-reload"
 
 echo "Creating Step Function..."
-# Load definition from the mounted file
-# We mount the whole project to /opt/lambdas in docker-compose.local.yml.
-# So properties file is at /opt/lambdas/step-function-definition-local.json
+# Use the local definition with LocalStack Lambda ARNs
+DEFINITION_FILE="/opt/project/step-function-definition-local.json"
+
+if [ ! -f "$DEFINITION_FILE" ]; then
+    echo "ERROR: $DEFINITION_FILE not found"
+    exit 1
+fi
+
 awslocal stepfunctions create-state-machine \
     --name "sidea-ai-clone-prod-wa-message-processor-sfn" \
-    --definition file:///opt/lambdas/step-function-definition-local.json \
-    --role-arn "arn:aws:iam::000000000000:role/service-role/StepFunctionRole"
+    --definition file://$DEFINITION_FILE \
+    --role-arn "arn:aws:iam::000000000000:role/service-role/StepFunctionRole" \
+    2>/dev/null || echo "Step Function already exists"
 
-echo "Setup Complete!"
+echo "✓ Step Function ready"
+
+echo ""
+echo "=== Setup Complete ===" 
+echo ""
+echo "Available resources:"
+echo "  • DynamoDB Tables: sidea-ai-clone-prod-messages-table, sidea-ai-clone-prod-sessions-table, sidea-ai-clone-prod-config-table"
+echo "  • S3 Bucket: sidea-ai-clone-prod-wa-media-s3"
+echo "  • Lambda Functions: reply-strategy-fn, generate-response-fn, text-to-speech-fn, get-file-contents-fn (with hot-reload)"
+echo "  • Step Function: sidea-ai-clone-prod-wa-message-processor-sfn"
+echo ""
+echo "⚠️  NOTE: PHP Lambda functions require Bref runtime. LocalStack Community may have limitations."
+echo "    If Lambda execution fails, consider using LocalStack Pro or Python wrapper functions."
+echo ""
+echo "Test with: ./run-test.sh test-payloads/text/01-simple-question.json"
+echo ""

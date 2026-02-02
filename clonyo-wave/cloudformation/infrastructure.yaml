@@ -29,11 +29,22 @@ Resources:
           AttributeType: S
         - AttributeName: sk
           AttributeType: S
+        - AttributeName: session_topic_key
+          AttributeType: S
       KeySchema:
         - AttributeName: pk
           KeyType: HASH
         - AttributeName: sk
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: session-topic-index
+          KeySchema:
+            - AttributeName: session_topic_key
+              KeyType: HASH
+            - AttributeName: sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -60,6 +71,27 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: ALL
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: clonyo-wave
+
+  SessionsTableV2:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'sidea-ai-clone-${Environment}-sessions-v2-table'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -132,13 +164,16 @@ Resources:
                   - dynamodb:PutItem
                   - dynamodb:Query
                   - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
                   - dynamodb:Scan
                 Resource:
                   - !GetAtt MessagesTable.Arn
                   - !GetAtt SessionsTable.Arn
+                  - !GetAtt SessionsTableV2.Arn
                   - !GetAtt ConfigTable.Arn
                   - !Sub '${MessagesTable.Arn}/index/*'
                   - !Sub '${SessionsTable.Arn}/index/*'
+                  - !Sub '${SessionsTableV2.Arn}/index/*'
 
         - PolicyName: S3Access
           PolicyDocument:
@@ -162,7 +197,9 @@ Resources:
                 Action:
                   - bedrock:InvokeModel
                   - bedrock:InvokeModelWithResponseStream
-                Resource: 'arn:aws:bedrock:eu-central-1::foundation-model/*'
+                Resource:
+                  - 'arn:aws:bedrock:eu-central-1::foundation-model/*'
+                  - !Sub 'arn:aws:bedrock:eu-central-1:${AWS::AccountId}:inference-profile/*'
               - Effect: Allow
                 Action:
                   - bedrock:Retrieve
@@ -217,8 +254,11 @@ Resources:
                 Resource:
                   - !GetAtt MessagesTable.Arn
                   - !GetAtt SessionsTable.Arn
+                  - !GetAtt SessionsTableV2.Arn
                   - !GetAtt ConfigTable.Arn
+                  - !Sub '${MessagesTable.Arn}/index/*'
                   - !Sub '${SessionsTable.Arn}/index/*'
+                  - !Sub '${SessionsTableV2.Arn}/index/*'
 
               - Effect: Allow
                 Action:
@@ -269,16 +309,28 @@ Outputs:
       Name: !Sub '${AWS::StackName}-MessagesTableArn'
 
   SessionsTableName:
-    Description: Name of the Sessions DynamoDB table
+    Description: Name of the Sessions DynamoDB table (legacy)
     Value: !Ref SessionsTable
     Export:
       Name: !Sub '${AWS::StackName}-SessionsTableName'
 
   SessionsTableArn:
-    Description: ARN of the Sessions DynamoDB table
+    Description: ARN of the Sessions DynamoDB table (legacy)
     Value: !GetAtt SessionsTable.Arn
     Export:
       Name: !Sub '${AWS::StackName}-SessionsTableArn'
+
+  SessionsTableV2Name:
+    Description: Name of the Sessions V2 DynamoDB table
+    Value: !Ref SessionsTableV2
+    Export:
+      Name: !Sub '${AWS::StackName}-SessionsTableV2Name'
+
+  SessionsTableV2Arn:
+    Description: ARN of the Sessions V2 DynamoDB table
+    Value: !GetAtt SessionsTableV2.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-SessionsTableV2Arn'
 
   ConfigTableName:
     Description: Name of the Config DynamoDB table

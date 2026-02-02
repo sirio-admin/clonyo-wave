@@ -1,0 +1,30 @@
+{
+  "wa_contact": {
+    "wa_id": "393331234567",
+    "profile": {
+      "name": "Marco Rossi"
+    }
+  },
+  "message_ts": 1738330800,
+  "reply_to_wa_id": "393331234567",
+  "text": {
+    "body": "Tornando agli investimenti di prima, posso aprire un PAC con versamenti mensili?"
+  },
+  "config": {
+    "wa_phone_number_arn": "arn:aws:social-messaging:eu-central-1:533267110337:phone-number-id/test-phone-001",
+    "kb_id": "PDZQMPE5HM",
+    "response_generator": {
+      "kb_id": "PDZQMPE5HM",
+      "model_id": "anthropic.claude-3-sonnet-20240229-v1:0",
+      "temperature": 0.5,
+      "max_tokens": 4096,
+      "system_prompt": "Sei un assistente finanziario esperto. Rispondi in modo chiaro e professionale."
+    },
+    "text_to_speech": {
+      "voice_id": "21m00Tcm4TlvDq8ikWAM",
+      "model_id": "eleven_multilingual_v2",
+      "stability": 0.5,
+      "similarity_boost": 0.75
+    }
+  }
+}

@@ -3,7 +3,8 @@
         "php": "^8.2",
         "aws/aws-sdk-php": "^3.0",
         "bref/bref": "^2.0",
-        "illuminate/support": "^10.0|^11.0"
+        "illuminate/support": "^10.0|^11.0",
+        "ramsey/uuid": "^4.0"
     },
     "autoload": {
         "psr-4": {

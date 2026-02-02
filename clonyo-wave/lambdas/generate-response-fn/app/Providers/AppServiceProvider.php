@@ -29,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
         );
 
         $this->app->singleton(
+            \Aws\DynamoDb\Marshaler::class,
+            fn () => new \Aws\DynamoDb\Marshaler()
+        );
+
+        $this->app->singleton(
             \App\Contracts\AiClone\ConfigRepository::class,
             fn (Application $app) => $app->makeWith(ConfigRepository::class, ['table_name' => $app->make('config')->get('ai-clone.router.config_table')])
         );
